@@ -55,7 +55,7 @@ cd PasswordManager
 ## Run the Application
 
 ```bash
-python3 password_manager.py
+python3 main.py
 ```
 
 ## Adding Accounts
