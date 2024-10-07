@@ -449,6 +449,7 @@ class PasswordManager:
         return
     
 
+    # Password Generator Conditions
     def update_alphabet(self):
         if self.include_caps.get():
             self.alphabet += list(string.ascii_uppercase)
@@ -459,6 +460,7 @@ class PasswordManager:
         return self.alphabet
 
 
+    # Generates a Random Password 
     def generate_password(self, length):
         password = ''.join(secrets.choice(self.alphabet) for i in range(length))
         self.entry.delete(0, tk.END)
