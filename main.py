@@ -1,16 +1,10 @@
-import os
-import string
-import secrets
 import sqlite3
-import pyperclip
-import create_key
-import send_email
-import email_check
-import strength_test
 import tkinter as tk
 import ttkbootstrap as tb
+import os, string, secrets, pyperclip
 from cryptography.fernet import Fernet
-from tkinter import ttk, filedialog, messagebox, Menu, Scale
+import create_key, send_email, email_check, strength_test
+from tkinter import ttk, filedialog, messagebox, Menu
 
 
 class PasswordManager:
