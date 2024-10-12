@@ -78,6 +78,9 @@ python3 main.py
 ## Contributing
 Feel free to fork this project, submit issues, or contribute improvements via pull requests.
 
+## Future Improvements
+I am working on integrating Amazon Simple Email Service (Amazon SES) to enhance the functionality of this application. This will allow users to receive updates directly via email, making it easier to keep track of any changes to their saved credentials. By utilizing Amazon SES, the application will be able to send reliable, scalable, and cost-effective emails with enhanced deliverability. Future updates will also include options to customize email content, such as adding user-defined email subjects and message templates.
+
 ## License
 This project is open-source and available under the [MIT License](LICENSE).
 
