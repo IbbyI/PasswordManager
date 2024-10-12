@@ -421,6 +421,7 @@ class PasswordManager:
         self.entry = tk.Entry(self.pwd_gen_window, width=30)
         slider = tk.Scale(self.pwd_gen_window, variable=password_length, from_=8, to=24, orient="horizontal", sliderlength=15, length=100)
         slider_value = tk.Label(self.pwd_gen_window, textvariable=password_length)
+        slider.set(16)
 
         self.include_special = tk.BooleanVar()
         self.include_caps = tk.BooleanVar()
@@ -433,10 +434,10 @@ class PasswordManager:
         option_numbers = tk.Checkbutton(self.pwd_gen_window, text="Include Numbers?", variable=self.include_numbers, command=self.update_alphabet)
         generate_pwd_button = tk.Button(self.pwd_gen_window, text="Generate Password", command=lambda : self.generate_password(password_length.get()))
         
-        self.entry.grid(row=1, column=3, padx=25, sticky="s")
-        slider.grid(row=2, column=3, sticky="s")
-        slider_value.grid(row=3, column=3, sticky="s")
-        generate_pwd_button.grid(row=4, column=3, sticky="s")
+        self.entry.grid(row=1, column=3, padx=25, pady=15, sticky="s")
+        slider.grid(row=2, column=3, sticky="n")
+        slider_value.grid(row=3, column=3, sticky="n")
+        generate_pwd_button.grid(row=4, column=3, sticky="n")
         option_special.grid(row=2, column=5, columnspan=2, sticky="w") 
         option_caps.grid(row=3, column=5, columnspan=2, sticky="w")
         option_numbers.grid(row=4, column=5, columnspan=2, sticky="w")
