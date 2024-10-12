@@ -42,7 +42,7 @@ Ensure that you have the following dependencies installed:
 - **Required Python packages**: Install these packages using `pip`:
 
 ```bash
-pip install sqlite3 pyperclip cryptography secrets tk ttkbootstrap
+pip install -r requirements.txt
 ```
 
 ### Clone the Repository
