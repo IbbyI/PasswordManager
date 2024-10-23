@@ -12,6 +12,7 @@ class AccountManager:
         self.email_manager = email_manager
         self.columns = ["ID", "Email", "Username", "Password", "Application"]
 
+
     # Handles New Account Data
     def new_data_handler(self, all_entry, opt_in_bool, window):
         try:
