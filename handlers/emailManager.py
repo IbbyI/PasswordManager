@@ -14,11 +14,14 @@ class EmailManager:
             sender_email = os.environ.get("email")
             sender_password = os.environ.get("appsPassword")
             message = MIMEMultipart("alternative")
-            message["Subject"] = "Account Information"
+            message["Subject"] = "Password Manager"
             message["From"] = sender_email
             message["To"] = recipient_email
-
-            html_text = MIMEText(file, "html")
+            
+            with open(file, "r", encoding="utf-8") as f:
+                html_content = f.read()
+            
+            html_text = MIMEText(html_content, "html")
             message.attach(html_text)
 
             with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
