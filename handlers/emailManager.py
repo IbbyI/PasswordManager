@@ -32,8 +32,9 @@ class EmailManager:
     # Checks if Email is Valid
     def is_valid_email(self, email):
         regex = re.compile(r'^[a-zA-Z0-9.!#$%&` *+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$')
-        return regex.match(email)
-
+        if regex.match(email):
+            return True
+        return False
 
     # Checks Password Against Pwned Password List
     def strength(self, password):

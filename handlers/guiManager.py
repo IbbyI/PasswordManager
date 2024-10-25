@@ -1,11 +1,11 @@
 from tkinter import Menu, messagebox, ttk, filedialog
 import tkinter as tk
 import ttkbootstrap as tb
-from databaseManager import DatabaseManager
-from encryptionManager import EncryptionManager
-from accountManager import AccountManager
-from passwordGenerator import PasswordGenerator
-from emailManager import EmailManager
+from handlers.databaseManager import DatabaseManager
+from handlers.encryptionManager import EncryptionManager
+from handlers.accountManager import AccountManager
+from handlers.passwordGenerator import PasswordGenerator
+from handlers.emailManager import EmailManager
 
 
 class GUIManager:
@@ -20,7 +20,6 @@ class GUIManager:
         self.style = tb.Style()
         self.style.theme_use("cyborg")
         self.columns = ["ID", "Email", "Username", "Password", "Application"]
-        
         self.build_main_window()
 
 
@@ -114,7 +113,7 @@ class GUIManager:
             if not i.get():
                 i.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
                 entry_filled = False
-        
+
         if entry_filled:
             self.account_manager.new_data_handler(self.all_entry, self.opt_in_bool, self.new_account_window)
 
@@ -203,7 +202,7 @@ class GUIManager:
         entry = tk.Entry(self.pwd_gen_window, width=30)
         slider = tk.Scale(self.pwd_gen_window, variable=password_length, from_=8, to=24, orient="horizontal", sliderlength=15, length=100)
         slider_value = tk.Label(self.pwd_gen_window, textvariable=password_length)
-        slider.set(16)
+        slider.set(password_length.get())
         
         option_special = tk.Checkbutton(self.pwd_gen_window, text="Include Special Characters?", variable=self.password_generator.include_special, command=self.password_generator.update_alphabet)
         option_caps = tk.Checkbutton(self.pwd_gen_window, text="Include Uppercase Letters?", variable=self.password_generator.include_caps, command=self.password_generator.update_alphabet)

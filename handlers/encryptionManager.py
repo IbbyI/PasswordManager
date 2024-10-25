@@ -1,4 +1,5 @@
 import os
+import hashlib
 from cryptography.fernet import Fernet
 
 class EncryptionManager:
@@ -24,3 +25,12 @@ class EncryptionManager:
     def decrypt(self, data):
         cipher = Fernet(self.key)
         return [cipher.decrypt(item).decode() if isinstance(item, bytes) else item for item in data]
+    
+
+    # Generate Salt
+    def generate_salt(self):
+        return os.urandom(32)
+
+    # Hashes Given Password
+    def hash_password(self, password, salt, iterations=10000):
+        return hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, iterations)
