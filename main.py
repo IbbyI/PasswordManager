@@ -1,15 +1,20 @@
 import tkinter as tk
 import ttkbootstrap as tb
-from databaseManager import DatabaseManager
-from encryptionManager import EncryptionManager
-from passwordGenerator import PasswordGenerator
-from emailManager import EmailManager
-from guiManager import GUIManager
-from accountManager import AccountManager
+from handlers.databaseManager import DatabaseManager
+from handlers.encryptionManager import EncryptionManager
+from handlers.passwordGenerator import PasswordGenerator
+from handlers.emailManager import EmailManager
+from handlers.guiManager import GUIManager
+from handlers.accountManager import AccountManager
+from handlers.masterLogin import MasterLogin
 
 
 class PasswordManagerApp:
     def __init__(self):
+        self.master_login = MasterLogin(self.on_login_success)
+
+
+    def on_login_success(self):
         # Initialize Main Tkinter Window With Necessary Classes
         self.main_window = tk.Tk()
         self.main_window.title("Password Manager")
