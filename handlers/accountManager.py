@@ -1,7 +1,6 @@
 
 import tkinter as tk
-from tkinter import ttk, messagebox
-from cryptography.fernet import Fernet
+from tkinter import messagebox
 
 class AccountManager:
     def __init__(self, main_window, db_manager, encryption_manager, ui_manager, email_manager):
@@ -10,8 +9,11 @@ class AccountManager:
         self.encryption_manager = encryption_manager
         self.ui_manager = ui_manager
         self.email_manager = email_manager
-        self.columns = ["ID", "Email", "Username", "Password", "Application"]
+        self.user_id = self.db_manager.get_user_id()
+        self.tuple_email = self.db_manager.get_email(self.user_id)
+        self.email = self.tuple_email[0]
 
+        self.columns = ["ID", "Email", "Username", "Password", "Application"]
 
     # Handles New Account Data
     def new_data_handler(self, all_entry, opt_in_bool, window):
@@ -25,11 +27,10 @@ class AccountManager:
 
             if self.email_manager.strength(new_acc_data[2]) is True:
                 messagebox.showwarning("Weak Password", "Your Password has been leaked.\nConsider changing your password.")
-
             self.db_manager.insert_account(new_acc_data)
             window.destroy()
             self.ui_manager.show_data()
-            self.email_manager.send_email(new_acc_data[0], "/html/welcome.html")
+            self.email_manager.send_email(self.email, "./html/welcome.html")
         except Exception as e:
             raise Exception(f"Error: {e}")
 
@@ -49,13 +50,15 @@ class AccountManager:
         try:
             if self.email_manager.strength(edited_data[2]) is True:
                 messagebox.showwarning("Weak Password", "Your Password has been leaked.\nConsider changing your password.")
-
+            
             edited_data.append(opt_in_bool.get())
             encrypted_data = self.encryption_manager.encrypt(edited_data)
             self.db_manager.update_account(selected_data[0], encrypted_data)
+
             window.destroy()
             self.ui_manager.show_data()
-            self.email_manager.send_email(edited_data[0], "/html/edit_data.html")
+
+            self.email_manager.send_email(self.email, "./html/edit_data.html")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update account: {e}")
 
@@ -69,7 +72,7 @@ class AccountManager:
             try:
                 self.db_manager.delete_account(selected_data[0])
                 self.ui_manager.show_data()
-                self.email_manager.send_email(selected_data[1], "/html/delete_data.html")
+                self.email_manager.send_email(self.email, "./html/delete_data.html")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete account: {e}")
     

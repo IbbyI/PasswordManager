@@ -1,6 +1,7 @@
-from tkinter import Menu, messagebox, ttk, filedialog
+import sys
 import tkinter as tk
 import ttkbootstrap as tb
+from tkinter import Menu, messagebox, ttk, filedialog
 from handlers.databaseManager import DatabaseManager
 from handlers.encryptionManager import EncryptionManager
 from handlers.accountManager import AccountManager
@@ -9,16 +10,17 @@ from handlers.emailManager import EmailManager
 
 
 class GUIManager:
-    def __init__(self, main_window):
-        self.main_window = main_window
-        self.db_manager = DatabaseManager()
+    def __init__(self, main_window, db_manager):
+        self.style = tb.Style()
+        self.style.theme_use("cyborg")
+
+        self.main_window = main_window 
+        self.db_manager = db_manager
         self.encryption_manager = EncryptionManager()
         self.password_generator = PasswordGenerator(self.main_window)
         self.email_manager = EmailManager()
         self.account_manager = None
-        
-        self.style = tb.Style()
-        self.style.theme_use("cyborg")
+
         self.columns = ["ID", "Email", "Username", "Password", "Application"]
         self.build_main_window()
 
@@ -28,7 +30,13 @@ class GUIManager:
         self.ui_manager = self
         self.account_manager = AccountManager(self.main_window, self.db_manager, self.encryption_manager, self.ui_manager, self.email_manager)
 
+
+    # Confirm Window Closure
+    def on_closure(self):
+        if messagebox.askokcancel("Close Password Manager", "Do you want to close the application?") == True:
+            sys.exit()
     
+
     # Get Data From Selected Row
     def get_selected(self, action="edit"):
         selected = self.tree.selection()
@@ -94,11 +102,13 @@ class GUIManager:
             self.entry.grid(row=i, column=1)
             self.all_entry.append(self.entry)
 
-        e1_button = tk.Button(self.new_account_window, text="Add Path", command=lambda: self.open_file_dialog(self.all_entry[3]))
+        e1_button = tk.Button(self.new_account_window, text="Add Path", 
+                              command=lambda: self.open_file_dialog(self.all_entry[3]))
         e1_button.grid(row=3, column=2, columnspan=1)
 
         self.opt_in_bool = tk.IntVar()
-        opt_in_checkbox = tk.Checkbutton(self.new_account_window, text="Opt in for newsletters!", variable=self.opt_in_bool, onvalue=1, offvalue=0)
+        opt_in_checkbox = tk.Checkbutton(self.new_account_window, text="Opt in for newsletters!", 
+                                        variable=self.opt_in_bool, onvalue=1, offvalue=0)
         opt_in_checkbox.grid(row=4, column=1, columnspan=1)
 
         submit_button = tk.Button(self.new_account_window, text="Submit", 
@@ -137,10 +147,12 @@ class GUIManager:
             edit_entries.append(entry)
 
         opt_in_bool = tk.IntVar(value=data[5])
-        opt_in_checkbox = tk.Checkbutton(edit_account_window, text="Opt in for newsletters!", variable=opt_in_bool, onvalue=1, offvalue=0)
+        opt_in_checkbox = tk.Checkbutton(edit_account_window, text="Opt in for newsletters!", 
+                                        variable=opt_in_bool, onvalue=1, offvalue=0)
         opt_in_checkbox.grid(row=7, column=1, columnspan=1)
 
-        submit_button = tk.Button(edit_account_window, text="Submit", command=lambda: self.account_manager.edit_data_handler(edit_entries, data, opt_in_bool, edit_account_window))
+        submit_button = tk.Button(edit_account_window, text="Submit", 
+                                command=lambda: self.account_manager.edit_data_handler(edit_entries, data, opt_in_bool, edit_account_window))
         submit_button.grid(row=8, column=1, columnspan=1)
     
 
@@ -165,15 +177,20 @@ class GUIManager:
     def open_file_dialog(self, entry_widget):
         entry_widget.insert(0, filedialog.askopenfilename())
 
+
     # Reveals Treeview Data
     def show_data(self):
         try:
-            encrypted_data = self.db_manager.fetch_data()
-            decrypted_data = [self.encryption_manager.decrypt(data) for data in encrypted_data]
-            self.refresh_tree_view()
-            for data in decrypted_data:
-                self.tree.insert("", tk.END, values=data)
-            self.data_button.configure(text="Hide Data", command=self.hide_data)
+            user_id = self.db_manager.get_user_id()
+            if user_id is not None:
+                encrypted_data = self.db_manager.fetch_data()
+                decrypted_data = [self.encryption_manager.decrypt(data) for data in encrypted_data]
+                sliced_data = [data[1:] for data in decrypted_data]
+                self.refresh_tree_view()
+
+                for data in sliced_data:
+                    self.tree.insert("", tk.END, values=data)
+                self.data_button.configure(text="Hide Data", command=self.hide_data)
         except Exception as e:
             messagebox.showerror("Error", str(e))
             self.delete_button.configure(state="disabled")
@@ -195,8 +212,6 @@ class GUIManager:
         self.pwd_gen_window.resizable(False, False)
         self.pwd_gen_window.title("Password Generator")
 
-        style = tb.Style()
-        style.theme_use("cyborg")
         password_length = tk.IntVar(value=16)
         
         entry = tk.Entry(self.pwd_gen_window, width=30)
@@ -204,9 +219,12 @@ class GUIManager:
         slider_value = tk.Label(self.pwd_gen_window, textvariable=password_length)
         slider.set(password_length.get())
         
-        option_special = tk.Checkbutton(self.pwd_gen_window, text="Include Special Characters?", variable=self.password_generator.include_special, command=self.password_generator.update_alphabet)
-        option_caps = tk.Checkbutton(self.pwd_gen_window, text="Include Uppercase Letters?", variable=self.password_generator.include_caps, command=self.password_generator.update_alphabet)
-        option_numbers = tk.Checkbutton(self.pwd_gen_window, text="Include Numbers?", variable=self.password_generator.include_numbers, command=self.password_generator.update_alphabet)
+        option_special = tk.Checkbutton(self.pwd_gen_window, text="Include Special Characters?", 
+                                    variable=self.password_generator.include_special, command=self.password_generator.update_alphabet)
+        option_caps = tk.Checkbutton(self.pwd_gen_window, text="Include Uppercase Letters?", 
+                                    variable=self.password_generator.include_caps, command=self.password_generator.update_alphabet)
+        option_numbers = tk.Checkbutton(self.pwd_gen_window, text="Include Numbers?", 
+                                    variable=self.password_generator.include_numbers, command=self.password_generator.update_alphabet)
         
 
         # Updates Generated Password Entry

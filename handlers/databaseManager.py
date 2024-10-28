@@ -3,6 +3,7 @@ import sqlite3
 class DatabaseManager:
     def __init__(self):
         self.db_name = "database.db"
+        self.user_id = None
 
 
     # Connects to Database
@@ -13,17 +14,6 @@ class DatabaseManager:
         except sqlite3.Error as e:
             raise Exception(f"Failed to connect to Database: {e}")
         
-    
-    # Gets All Data from Database
-    def fetch_data(self):
-        try:
-            with self.connect() as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM accounts")
-                return cursor.fetchall()
-        except sqlite3.Error as e:
-            raise Exception(f"Failed to Fetch Data: {e}")
-        
 
     # Inserts New Master User into Database
     def create_new_user(self, email, hash, salt):
@@ -33,45 +23,74 @@ class DatabaseManager:
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS users (
                         user_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        email TEXT, 
+                        email TEXT UNIQUE, 
                         hash TEXT,
-                        salt TEXT,
-                        UNIQUE (email, hash, salt))
+                        salt TEXT
+                    )
                 """)
-                cursor.execute("INSERT INTO users(user_id, email, hash, salt) VALUES (?, ?, ?, ?)", (None, email, hash, salt))
+                cursor.execute("INSERT INTO users (email, hash, salt) VALUES (?, ?, ?)", (email, hash, salt))
                 print("New User Has Been Inserted Into Database.")
         except sqlite3.Error as e:
             raise Exception(f"Failed to Insert New User Into Database: {e}")
-        
+
 
     # Search User in Database
     def search_user(self, email):
         try:
             with self.connect() as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT salt, hash FROM users WHERE email = ?", (email,))
-                return cursor.fetchone()
+                cursor.execute("SELECT user_id, salt, hash FROM users WHERE email = ?", (email,))
+                results = cursor.fetchone()
+                
+                if results:
+                    self.user_id = results[0]
+                    return results[0], bytes(results[1]), results[2]
+                else:
+                    print(f"No user found for email: {email}")
+                    return None
         except sqlite3.Error as e:
             raise Exception(f"Failed to Find User In Database: {e}")
+
+
+    # Gets All Data from Database
+    def fetch_data(self):
+        self.user_id = self.get_user_id()
+        if self.user_id is None:
+            raise Exception("User ID is not set. Cannot fetch data.")
+        try:
+            with self.connect() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM accounts WHERE user_id = ?", (self.user_id,))
+                data = cursor.fetchall()
+                return data
+        except sqlite3.Error as e:
+            raise Exception(f"Failed to Fetch Data: {e}")
         
 
     # Inserts New Account into Database
     def insert_account(self, data):
+        self.user_id = self.get_user_id()
+        if self.user_id is None:
+            raise Exception("User ID is not set. Cannot insert account.")
         try:
             with self.connect() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS accounts (
                         account_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id INTEGER,
                         email TEXT, 
                         username TEXT, 
                         password TEXT, 
                         application TEXT, 
-                        opt_in INTEGER)
+                        opt_in INTEGER,
+                        FOREIGN KEY (user_id) REFERENCES users(user_id)
+                    )
                 """)
-                cursor.execute("INSERT INTO accounts(account_id, email, username, password, application, opt_in) VALUES (?, ?, ?, ?, ?, ?)",
-                            (None, *data))
+                cursor.execute("INSERT INTO accounts (user_id, email, username, password, application, opt_in) VALUES (?, ?, ?, ?, ?, ?)",
+                (self.user_id, *data))
                 conn.commit()
+                print("New account has been inserted into the database.")
         except sqlite3.Error as e:
             raise Exception(f"Failed to Insert Account Into Database: {e}")
 
@@ -81,9 +100,11 @@ class DatabaseManager:
         try:
             with self.connect() as conn:
                 cursor = conn.cursor()
-                set_clause = ", ".join([f"{col} = ?" for col in ["email", "username", "password", "application"]])
-                query = f"UPDATE accounts SET {set_clause}, opt_in = ? WHERE account_id = ?"
+                set_clause = ", ".join([f"{col} = ?" for col in ["email", "username", "password", "application", "opt_in"]])
+                query = f"UPDATE accounts SET {set_clause} WHERE account_id = ?"
                 cursor.execute(query, data + [account_id])
+                conn.commit()
+                print("Account has been updated.")
         except sqlite3.Error as e:
             raise Exception(f"Failed to Update Account: {e}")
 
@@ -95,6 +116,7 @@ class DatabaseManager:
                 cursor = conn.cursor()
                 cursor.execute("DELETE FROM accounts WHERE account_id = ?", (account_id,))
                 conn.commit()
+                print("Account has been deleted.")
         except sqlite3.Error as e:
             raise Exception(f"Failed to Delete Account From Database: {e}")
 
@@ -109,11 +131,36 @@ class DatabaseManager:
         except sqlite3.Error as e:
             raise Exception(f"Failed to Delete Database Table: {e}")
     
-    
+
     # Checks for Data in Database
     def check_db_for_data(self):
         with self.connect() as conn:
             cursor = conn.cursor()
             cursor.execute('PRAGMA table_info(accounts)')
-            data = cursor.fetchone()
+            data = cursor.fetchall()
             return data
+
+
+    # Search Database For Email Using User_ID
+    def get_email(self, user_id):
+        try:
+            with self.connect() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT email FROM users WHERE user_id = ?", (user_id,))
+                results = cursor.fetchone()
+                return results
+        except sqlite3.Error as e:
+            raise Exception(f"Failed to Fetch Email: {e}")
+        
+
+    # Retrieves User ID of Logged User
+    def get_user_id(self):
+        if self.user_id is not None:
+            return self.user_id
+        else:
+            raise Exception("User is not logged in. Please log in first.")
+
+    # Saves User_ID Variable
+    def set_user_id(self, user_id):
+        self.user_id = user_id
+        return self.user_id

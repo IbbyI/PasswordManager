@@ -39,6 +39,7 @@ class EmailManager:
             return True
         return False
 
+
     # Checks Password Against Pwned Password List
     def strength(self, password):
         url = "https://www.ncsc.gov.uk/static-assets/documents/PwnedPasswordsTop100k.json"
