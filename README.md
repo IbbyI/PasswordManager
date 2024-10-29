@@ -6,32 +6,38 @@ This Password Manager is a Python-based application that helps you securely stor
 
 ## Features
 
-### 1. **Account Management**
-   - Store credentials (email, username, password, application name) securely.
-   - Add, edit, and delete account information using an intuitive interface.
-   - **Treeview Display**: Easily navigate through saved accounts with a treeview structure.
+### 1. **Master Login Page**
+   - **Secure Authentication**: The application starts with a master login page that ensures only authorized users can access the stored credentials.
+   - **SHA-256 Hashing with Salt**: The master password is securely stored using SHA-256 hashing with a random 32-bit salt. This ensures that the password is hashed before storage, and the hash is verified during login, preventing plain-text password storage and enhancing security.
 
-### 2. **Password Generation**
-   - Generate strong, secure passwords with customizable options:
+### 2. **Account Management**
+   - **Store Credentials**: Securely store account information including email, username, password, and application name.
+   - **Add, Edit, and Delete Options**: Easily manage account data through an intuitive interface with options to add, edit, or delete entries.
+   - **Treeview Display**: Navigate through saved accounts with a treeview structure for quick access and overview of accounts.
+
+### 3. **Password Generation**
+   - **Strong Password Creation**: Generate secure, random passwords with customizable options.
+   - **Customization Options**:
      - Include special characters, uppercase letters, and numbers.
-     - Choose password length (8-24 characters).
-   - Automatically copy the generated password to your clipboard.
+     - Select password length (8-24 characters).
+   - **Clipboard Copy**: Automatically copies the generated password to your clipboard for easy use.
 
-### 3. **Data Security**
-   - All passwords and sensitive information are encrypted using **Fernet encryption** from the `cryptography` library.
-   - Secure key management with a Fernet encryption key.
+### 4. **Data Security**
+   - **Encryption with Fernet**: All passwords and sensitive data are encrypted using **Fernet encryption** from the `cryptography` library, ensuring that data remains secure.
+   - **Secure Key Management**: The encryption key is securely managed to ensure that only authorized users can decrypt the information.
 
-### 4. **Email Notifications**
-   - Integration with email services to send notifications when new accounts are added or edited (optional feature).
-   - Email validation to ensure correct email formatting before saving.
+### 5. **Email Notifications**
+   - **Optional Email Alerts**: Send notifications via email when new accounts are added or edited (optional).
+   - **Email Validation**: Validates email formatting before allowing data to be saved, ensuring accuracy.
 
-### 5. **SQLite Database**
-   - Credentials are stored locally in an **SQLite database**.
-   - Easy data retrieval with built-in decryption for safe display of stored information.
+### 6. **SQLite Database**
+   - **Local Storage**: Credentials are stored in an **SQLite database** on the local machine.
+   - **Decryption on Retrieval**: Data is decrypted only when needed for display, ensuring stored information remains secure.
 
-### 6. **Modern User Interface**
-   - The application uses the `ttkbootstrap` library to provide a sleek and modern look, with the **Cyborg** theme for dark mode.
-   - Interactive buttons, entry fields, checkboxes, and a context menu (right-click) for editing or deleting accounts.
+### 7. **Modern User Interface**
+   - **ttkbootstrap Theme**: The application uses the `ttkbootstrap` library to provide a sleek and modern look.
+   - **Dark Mode**: The **Cyborg** theme is used for a dark mode experience.
+   - **Interactive Elements**: Includes interactive buttons, entry fields, checkboxes, and a context menu (right-click) for editing or deleting accounts.
 
 ## Installation
 
@@ -41,9 +47,8 @@ Ensure that you have the following dependencies installed:
 - **Python 3.x**
 - **Required Python packages**: Install these packages using `pip`:
 
-```bash
-pip install -r requirements.txt
-```
+  ```bash
+  pip install -r requirements.txt
 
 ### Clone the Repository
 ```bash
@@ -57,6 +62,14 @@ cd PasswordManager
 ```bash
 python3 main.py
 ```
+
+###  Enable Email Notifications
+## Create an Apps Password
+- Head over to the [Google Apps Password Settings](https://myaccount.google.com/apppasswords).
+- Login to your account.
+- Create a new app-specific password and name it Password Manager.
+- Insert your email into an environment variable named **email**.
+- Insert your apps password into an environment variable named **appsPassword**.
 
 ## Adding Accounts
 - Click the **Add Account** button.
@@ -78,12 +91,9 @@ python3 main.py
 ## Contributing
 Feel free to fork this project, submit issues, or contribute improvements via pull requests.
 
-## Future Improvements
-I am working on integrating Amazon Simple Email Service (Amazon SES) to enhance the functionality of this application. This will allow users to receive updates directly via email, making it easier to keep track of any changes to their saved credentials. By utilizing Amazon SES, the application will be able to send reliable, scalable, and cost-effective emails with enhanced deliverability. Future updates will also include options to customize email content, such as adding user-defined email subjects and message templates.
-
 ## License
 This project is open-source and available under the [MIT License](LICENSE).
 
 ## Author
-This project was created by [Valor](https://github.com/Valorrr)
+This project was created by [Valor](https://github.com/Valorrr).
 
