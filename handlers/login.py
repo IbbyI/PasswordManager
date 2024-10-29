@@ -25,6 +25,14 @@ class MasterLogin:
         self.login_window.mainloop()
 
 
+    # Changes the Window Mode Between Login/Signup
+    def mode(self, action="signup"):
+        if action == "signup":
+            self.signup_ui()
+        if action == "login":
+            self.login_ui()
+
+
     # Creates UI for Sign Up Window
     def signup_ui(self):
         for i in self.login_window.winfo_children():
@@ -94,14 +102,6 @@ class MasterLogin:
         signup.pack(side="bottom", anchor="center")
 
         self.login_window.bind("<Return>", lambda event:self.credentials_check(email_entry.get(), password_entry.get()))
-
-
-    # Changes the Window Mode Between Login/Signup
-    def mode(self, action="signup"):
-        if action == "signup":
-            self.signup_ui()
-        if action == "login":
-            self.login_ui()
 
     
     # Checks If Given Login Details Are Valid
