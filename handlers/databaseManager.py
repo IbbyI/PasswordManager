@@ -29,7 +29,6 @@ class DatabaseManager:
                     )
                 """)
                 cursor.execute("INSERT INTO users (email, hash, salt) VALUES (?, ?, ?)", (email, hash, salt))
-                print("New User Has Been Inserted Into Database.")
         except sqlite3.Error as e:
             raise Exception(f"Failed to Insert New User Into Database: {e}")
 
@@ -90,9 +89,20 @@ class DatabaseManager:
                 cursor.execute("INSERT INTO accounts (user_id, email, username, password, application, opt_in) VALUES (?, ?, ?, ?, ?, ?)",
                 (self.user_id, *data))
                 conn.commit()
-                print("New account has been inserted into the database.")
         except sqlite3.Error as e:
             raise Exception(f"Failed to Insert Account Into Database: {e}")
+
+
+    # Updates User Data in Database
+    def update_user(self, email, hash, salt):
+        try:
+            with self.connect() as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET hash = ?, salt = ? WHERE email = ?", (hash, salt, email))
+                conn.commit()
+        except sqlite3.Error as e:
+            raise Exception(f"Failed to Update User: {e}")
+        return
 
 
     # Updates Account Data in Database
@@ -104,7 +114,6 @@ class DatabaseManager:
                 query = f"UPDATE accounts SET {set_clause} WHERE account_id = ?"
                 cursor.execute(query, data + [account_id])
                 conn.commit()
-                print("Account has been updated.")
         except sqlite3.Error as e:
             raise Exception(f"Failed to Update Account: {e}")
 
@@ -116,7 +125,6 @@ class DatabaseManager:
                 cursor = conn.cursor()
                 cursor.execute("DELETE FROM accounts WHERE account_id = ?", (account_id,))
                 conn.commit()
-                print("Account has been deleted.")
         except sqlite3.Error as e:
             raise Exception(f"Failed to Delete Account From Database: {e}")
 
@@ -126,7 +134,7 @@ class DatabaseManager:
         try:
             with self.connect() as conn:
                 cursor = conn.cursor()
-                cursor.execute("DROP TABLE IF EXISTS accounts")
+                cursor.execute("DELETE FROM accounts WHERE user_id = ?", (self.user_id,))
                 conn.commit()
         except sqlite3.Error as e:
             raise Exception(f"Failed to Delete Database Table: {e}")

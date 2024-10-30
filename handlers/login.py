@@ -1,5 +1,9 @@
+import os
+import random
 import tkinter as tk
 import ttkbootstrap as tb
+from string import Template
+from threading import Thread
 from tkinter import messagebox
 from handlers.encryptionManager import EncryptionManager
 from handlers.databaseManager import DatabaseManager
@@ -20,6 +24,7 @@ class MasterLogin:
         self.style = tb.Style()
         self.style.theme_use("cyborg")
 
+        self.OTP = None
         self.mode(action="login")
         self.login_success = login_success
         self.login_window.mainloop()
@@ -31,6 +36,8 @@ class MasterLogin:
             self.signup_ui()
         if action == "login":
             self.login_ui()
+        if action == "forgot_password":
+            self.forgot_password()
 
 
     # Creates UI for Sign Up Window
@@ -40,45 +47,26 @@ class MasterLogin:
 
         self.login_window.title("Password Manager Signup")
 
-        tk.Label(self.login_window, text=" Enter your Email").pack()
-        email_entry = tk.Entry(self.login_window)
+        tk.Label(self.login_window, text=" Enter your Email:").pack()
+        email_entry = tk.Entry(self.login_window, width=22)
         email_entry.pack(pady=3)
 
-        tk.Label(self.login_window, text="Enter your Password").pack()
-        password_entry = tk.Entry(self.login_window, show="*")
+        tk.Label(self.login_window, text="Enter your Password:").pack()
+        password_entry = tk.Entry(self.login_window, show="*", width=22)
         password_entry.pack(pady=3)
 
-        tk.Label(self.login_window, text="Confirm your Password").pack()
-        confirm_password_entry = tk.Entry(self.login_window, show="*")
+        tk.Label(self.login_window, text="Confirm your Password:").pack()
+        confirm_password_entry = tk.Entry(self.login_window, show="*", width=22)
         confirm_password_entry.pack(pady=3)
 
-
-        # Checks if Email is Valid & Passwords Match
-        def validate_user():
-            if not self.email_manager.is_valid_email(email_entry.get()):
-                messagebox.showwarning("Invalid Email", "Please enter a valid email address.")
-                email_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
-                return
-
-            if password_entry.get() > 8 or self.email_manager.strength(password_entry.get()) is True:
-                messagebox.showerror("Error", "Choose a Stronger Password")
-                password_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
-
-            if password_entry.get() == confirm_password_entry.get():
-                self.new_user_handler(email_entry.get(), password_entry.get())
-            else:
-                messagebox.showerror("Error", "Passwords do not match.")
-                password_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
-                confirm_password_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
-
-
-        self.register_button = tk.Button(self.login_window, text="Register", command=validate_user)
-        self.register_button.pack(pady=5)
-        self.login_window.bind("<Return>", validate_user)
-
+        self.register_button = tk.Button(self.login_window, text="Register", command=lambda: self.validate_user(email_entry, password_entry, confirm_password_entry, action="new"))
         login = tk.Button(self.login_window, text="Login", command=self.login_ui)
-        login.pack(side="bottom", anchor="center")
-        
+
+        self.register_button.pack(pady=5)
+        login.pack(side="bottom", anchor="center", pady=5)
+
+        self.login_window.bind("<Return>", lambda event:self.validate_user(email_entry, password_entry, confirm_password_entry, action="new"))
+
 
     # Creates UI For Login Window
     def login_ui(self):
@@ -88,37 +76,69 @@ class MasterLogin:
         self.login_window.title("Password Manager Login")
 
         tk.Label(self.login_window, text="Email").pack()
-        email_entry = tk.Entry(self.login_window)
+        email_entry = tk.Entry(self.login_window, width=22)
         email_entry.pack(pady=3)
 
         tk.Label(self.login_window, text="Password").pack()
-        password_entry = tk.Entry(self.login_window, show="*")
+        password_entry = tk.Entry(self.login_window, show="*", width=22)
         password_entry.pack(pady=3)
-
-        self.login_button = tk.Button(self.login_window, text="Log In", command= lambda: self.credentials_check(email_entry.get(), password_entry.get()))
-        self.login_button.pack(pady=5)
-
-        signup = tk.Button(self.login_window, text="Sign Up", command=self.signup_ui)
-        signup.pack(side="bottom", anchor="center")
-
-        self.login_window.bind("<Return>", lambda event:self.credentials_check(email_entry.get(), password_entry.get()))
-
     
+        self.login_button = tk.Button(self.login_window, text="Log In", command= lambda: self.credentials_check(email_entry, password_entry))
+        forgot_password = tk.Button(self.login_window, text="Forgot Password", command=lambda: self.forgot_password())
+        signup = tk.Button(self.login_window, text="Sign Up", command=self.signup_ui)
+
+        forgot_password.pack(side="bottom", anchor="center", pady=5)
+        signup.pack(side="bottom", anchor="center", pady=5)
+        self.login_button.pack(side= "bottom", pady=5)
+
+        self.login_window.bind("<Return>", lambda event:self.credentials_check(email_entry, password_entry))
+
+
+    # Checks if Email is Valid & Passwords Match
+    def validate_user(self, email_entry, password_entry, confirm_entry, action="new"):
+        if not self.email_manager.is_valid_email(email_entry.get()):
+            messagebox.showwarning("Invalid Email", "Please enter a valid email address.")
+            email_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
+            return
+
+        if len(password_entry.get()) < 8 or self.email_manager.strength(password_entry.get()) is True:
+            password_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
+            messagebox.showerror("Error", "Choose a Stronger Password")
+            return
+
+        if password_entry.get() == confirm_entry.get():
+            if action == "new":
+                self.new_user_handler(email_entry.get(), password_entry.get())
+            if action == "reset":
+                self.update_user_handler(email_entry.get(), password_entry.get())
+        else:
+            password_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
+            confirm_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
+            messagebox.showerror("Error", "Passwords do not match.")
+    
+
     # Checks If Given Login Details Are Valid
-    def credentials_check(self, email, password):
+    def credentials_check(self, email_entry, password_entry):
+        email = email_entry.get()
+        password = password_entry.get()
         if not self.email_manager.is_valid_email(email):
+            email_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")            
             messagebox.showwarning("Invalid Email", "Please enter a valid email address.")
             return
-        results = self.db_manager.search_user(email)
         
+        results = self.db_manager.search_user(email)
         if results:
              user_id = results[0]
         else:   
+            email_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
+            password_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
             messagebox.showerror("Invalid Credentials", "The username and password you entered do not match our records.")
             return
         
         hash = self.encryption_manager.hash_password(password, results[1], iterations=10000)
         if hash != results[2]:
+            email_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
+            password_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
             messagebox.showerror("Invalid Credentials", "The username and password you entered do not match our records.")
             return
         else:
@@ -133,3 +153,112 @@ class MasterLogin:
         hash = self.encryption_manager.hash_password(password, salt)
         self.db_manager.create_new_user(email, hash, salt)
         self.login_ui()
+
+
+    # Handles Updated User Data
+    def update_user_handler(self, email, password):
+        salt = self.encryption_manager.generate_salt()
+        hash = self.encryption_manager.hash_password(password, salt)
+        self.db_manager.update_user(email, hash, salt)
+        self.login_ui()
+    
+
+    # Forgot Password Feature
+    def forgot_password(self):
+        for i in self.login_window.winfo_children():
+            i.destroy()
+
+        self.login_window.title("Reset Password")
+
+        tk.Label(self.login_window, text=" Enter your Email:").pack()
+        self.forgot_email_entry = tk.Entry(self.login_window, width=22)
+        self.forgot_email_entry.pack(pady=3)
+
+        reset_password_button = tk.Button(self.login_window, text="Reset Password", command=lambda: self.handle_reset(self.forgot_email_entry.get()))
+        reset_password_button.pack(pady=5)
+
+
+    # Creates Email Template for OTP
+    def handle_reset(self, email):
+        results = self.db_manager.search_user(email)
+        if results:
+            self.OTP = random.sample(range(10**6), 1)[0]
+            print(F"OTP is: {self.OTP}")
+            if not hasattr(self, "otp_template"):
+                with open("./html/template.html", "r") as f:
+                    self.otp_template = Template(f.read())
+            edited_template = self.otp_template.safe_substitute(code=self.OTP)
+
+            with open("./html/temp_password.html", "w") as f:
+                f.write(edited_template)
+            
+            Thread(target=self.send_email_thread, args=(email, "./html/temp_password.html")).start()
+
+            messagebox.showinfo("One Time Password Sent", "Please check your email for your OTP.")
+            self.OTP_request_window(email)
+        else:
+            self.forgot_email_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")            
+            messagebox.showwarning("Email Not Found", "Email hasn't been registered yet.")
+
+
+    # Creates the OTP Request Window
+    def OTP_request_window(self, email):
+        for i in self.login_window.winfo_children():
+            i.destroy()
+        tk.Label(self.login_window, text="Email").pack()
+        email_entry = tk.Entry(self.login_window, width=22)
+        email_entry.pack(pady=3)
+        email_entry.insert(0, email)
+
+        tk.Label(self.login_window, text="Enter Your OTP").pack()
+        OTP_entry = tk.Entry(self.login_window, width=22)
+        OTP_entry.pack(pady=3)    
+
+        self.submit_OTP = tk.Button(self.login_window, text="Submit", command=lambda: self.check_OTP(int(OTP_entry.get()), email))
+        self.submit_OTP.pack(side= "bottom", pady=10)
+        return
+
+
+    # Handles the OTP Comparison
+    def check_OTP(self, OTP, email):
+        if self.OTP == OTP:
+            self.reset_password_window(email)
+        else:
+            print(f"self.otp: {type(self.OTP)}")
+            print(f"otp: {type(OTP)}")
+            messagebox.showerror("Wrong OTP", "otp is wrong")
+
+
+    # Seperate Thread for Email Send
+    def send_email_thread(self, email, file):
+        self.email_manager.send_email(email, file)
+        os.remove("./html/temp_password.html")
+
+
+    # Creates Reset Password Window When OTP is Confirmed
+    def reset_password_window(self, email):
+        for i in self.login_window.winfo_children():
+            i.destroy()
+
+        self.login_window.title("Password Manager Reset Password")
+
+        tk.Label(self.login_window, text=" Enter your Email:").pack()
+        email_entry = tk.Entry(self.login_window, width=22)
+        email_entry.pack(pady=3)
+
+        email_entry.insert(0, email)
+        email_entry.config(state="readonly")
+        email_entry.config(readonlybackground="#201c1c")
+
+        tk.Label(self.login_window, text="Enter your Password:").pack()
+        password_entry = tk.Entry(self.login_window, show="*", width=22)
+        password_entry.pack(pady=3)
+
+        tk.Label(self.login_window, text="Confirm your Password:").pack()
+        confirm_password_entry = tk.Entry(self.login_window, show="*", width=22)
+        confirm_password_entry.pack(pady=3)
+
+        submit_button = tk.Button(self.login_window, text="Log In",command=lambda: self.validate_user(email_entry, password_entry, confirm_password_entry, action="reset"))
+        submit_button.pack(pady=5)
+
+        self.login_window.bind("<Return>", lambda event:self.validate_user(email_entry, password_entry, confirm_password_entry, action="reset"))
