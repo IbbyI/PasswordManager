@@ -1,5 +1,6 @@
 
 import tkinter as tk
+from threading import Thread
 from tkinter import messagebox
 
 class AccountManager:
@@ -30,7 +31,6 @@ class AccountManager:
             self.db_manager.insert_account(new_acc_data)
             window.destroy()
             self.ui_manager.show_data()
-            self.email_manager.send_email(self.email, "./html/welcome.html")
         except Exception as e:
             raise Exception(f"Error: {e}")
 
@@ -58,7 +58,6 @@ class AccountManager:
             window.destroy()
             self.ui_manager.show_data()
 
-            self.email_manager.send_email(self.email, "./html/edit_data.html")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update account: {e}")
 
@@ -72,7 +71,6 @@ class AccountManager:
             try:
                 self.db_manager.delete_account(selected_data[0])
                 self.ui_manager.show_data()
-                self.email_manager.send_email(self.email, "./html/delete_data.html")
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete account: {e}")
     
