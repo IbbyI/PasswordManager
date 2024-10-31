@@ -52,7 +52,7 @@ Ensure that you have the following dependencies installed:
 
 ### Clone the Repository
 ```bash
-git clone https://github.com/Valorrr/PasswordManager.git
+git clone https://github.com/IbbyI/PasswordManager.git
 cd PasswordManager
 ```
 
@@ -95,5 +95,5 @@ Feel free to fork this project, submit issues, or contribute improvements via pu
 This project is open-source and available under the [MIT License](LICENSE).
 
 ## Author
-This project was created by [Valor](https://github.com/Valorrr).
+This project was created by [Ibby](https://github.com/IbbyI).
 
