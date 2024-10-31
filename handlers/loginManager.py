@@ -6,8 +6,8 @@ from string import Template
 from threading import Thread
 from tkinter import messagebox
 from handlers.encryptionManager import EncryptionManager
-from handlers.databaseManager import DatabaseManager
 from handlers.emailManager import EmailManager
+from handlers.otpManager import OTPManager
 
 
 class MasterLogin:
@@ -15,11 +15,12 @@ class MasterLogin:
         self.db_manager = db_manager
         self.encryption_manager = EncryptionManager()        
         self.email_manager= EmailManager()
+        self.otp_manager = OTPManager(self.email_manager)
 
         self.login_window = tk.Tk()
         self.login_window.title("Password Manager Login")
         self.login_window.resizable(False, False)
-        self.login_window.geometry("300x200+550+150")
+        self.login_window.geometry("320x220+550+150")
 
         self.style = tb.Style()
         self.style.theme_use("cyborg")
@@ -62,8 +63,8 @@ class MasterLogin:
         self.register_button = tk.Button(self.login_window, text="Register", command=lambda: self.validate_user(email_entry, password_entry, confirm_password_entry, action="new"))
         login = tk.Button(self.login_window, text="Login", command=self.login_ui)
 
-        self.register_button.pack(pady=5)
-        login.pack(side="bottom", anchor="center", pady=5)
+        self.register_button.pack(pady=3)
+        login.pack(anchor="center", side="bottom", pady=2)
 
         self.login_window.bind("<Return>", lambda event:self.validate_user(email_entry, password_entry, confirm_password_entry, action="new"))
 
@@ -83,13 +84,13 @@ class MasterLogin:
         password_entry = tk.Entry(self.login_window, show="*", width=22)
         password_entry.pack(pady=3)
     
-        self.login_button = tk.Button(self.login_window, text="Log In", command= lambda: self.credentials_check(email_entry, password_entry))
+        login_button = tk.Button(self.login_window, text="Log In", command= lambda: self.credentials_check(email_entry, password_entry))
         forgot_password = tk.Button(self.login_window, text="Forgot Password", command=lambda: self.forgot_password())
         signup = tk.Button(self.login_window, text="Sign Up", command=self.signup_ui)
 
-        forgot_password.pack(side="bottom", anchor="center", pady=5)
-        signup.pack(side="bottom", anchor="center", pady=5)
-        self.login_button.pack(side= "bottom", pady=5)
+        login_button.pack(pady=5)
+        forgot_password.pack(side="bottom", anchor="center", pady=3)
+        signup.pack(side="bottom", anchor="center")
 
         self.login_window.bind("<Return>", lambda event:self.credentials_check(email_entry, password_entry))
 
@@ -153,6 +154,7 @@ class MasterLogin:
         hash = self.encryption_manager.hash_password(password, salt)
         self.db_manager.create_new_user(email, hash, salt)
         self.login_ui()
+        self.email_manager.send_email(email, file="./html/welcome.html")
 
 
     # Handles Updated User Data
@@ -161,6 +163,7 @@ class MasterLogin:
         hash = self.encryption_manager.hash_password(password, salt)
         self.db_manager.update_user(email, hash, salt)
         self.login_ui()
+        self.email_manager.send_email(email, file="./html/edit_data.html")
     
 
     # Forgot Password Feature
@@ -175,25 +178,18 @@ class MasterLogin:
         self.forgot_email_entry.pack(pady=3)
 
         reset_password_button = tk.Button(self.login_window, text="Reset Password", command=lambda: self.handle_reset(self.forgot_email_entry.get()))
+        login_button = tk.Button(self.login_window, text="Login", command=self.login_ui)
+
         reset_password_button.pack(pady=5)
+        login_button.pack(side="bottom", pady=2)
 
 
     # Creates Email Template for OTP
     def handle_reset(self, email):
         results = self.db_manager.search_user(email)
         if results:
-            self.OTP = random.sample(range(10**6), 1)[0]
-            print(F"OTP is: {self.OTP}")
-            if not hasattr(self, "otp_template"):
-                with open("./html/template.html", "r") as f:
-                    self.otp_template = Template(f.read())
-            edited_template = self.otp_template.safe_substitute(code=self.OTP)
-
-            with open("./html/temp_password.html", "w") as f:
-                f.write(edited_template)
-            
-            Thread(target=self.send_email_thread, args=(email, "./html/temp_password.html")).start()
-
+            otp = self.otp_manager.generate_otp()
+            self.otp_manager.send_email(email, otp) 
             messagebox.showinfo("One Time Password Sent", "Please check your email for your OTP.")
             self.OTP_request_window(email)
         else:
@@ -221,18 +217,10 @@ class MasterLogin:
 
     # Handles the OTP Comparison
     def check_OTP(self, OTP, email):
-        if self.OTP == OTP:
+        if self.otp_manager.verify_OTP(OTP):
             self.reset_password_window(email)
         else:
-            print(f"self.otp: {type(self.OTP)}")
-            print(f"otp: {type(OTP)}")
-            messagebox.showerror("Wrong OTP", "otp is wrong")
-
-
-    # Seperate Thread for Email Send
-    def send_email_thread(self, email, file):
-        self.email_manager.send_email(email, file)
-        os.remove("./html/temp_password.html")
+            messagebox.showerror("Wrong OTP", "Please Try Again.")
 
 
     # Creates Reset Password Window When OTP is Confirmed
