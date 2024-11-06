@@ -3,15 +3,17 @@ import hashlib
 from cryptography.fernet import Fernet
 
 class EncryptionManager:
-    def __init__(self):
+    def __init__(self, log_manager):
+        self.log_manager = log_manager
         self.key = self.read_key()
 
 
     # Creates Fernet Key
     def read_key(self):
-        key = os.getenv("FERNET_KEY")
+        key = os.getenv("FERNET")
         if not key:
-            raise Exception("Encryption key is missing or invalid.")
+            self.log_manager.write_log(error_message="Encryption key is missing or invalid.")
+            return None
         return key
 
 

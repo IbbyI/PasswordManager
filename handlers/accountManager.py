@@ -1,15 +1,17 @@
-
+import logging
 import tkinter as tk
 from threading import Thread
 from tkinter import messagebox
 
 class AccountManager:
-    def __init__(self, main_window, db_manager, encryption_manager, ui_manager, email_manager):
+    def __init__(self, main_window, db_manager, encryption_manager, ui_manager, email_manager, log_manager):
         self.main_window = main_window
         self.db_manager = db_manager
         self.encryption_manager = encryption_manager
         self.ui_manager = ui_manager
         self.email_manager = email_manager
+        self.log_manager = log_manager
+
         self.user_id = self.db_manager.get_user_id()
         self.tuple_email = self.db_manager.get_email(self.user_id)
         self.email = self.tuple_email[0]
@@ -32,6 +34,7 @@ class AccountManager:
             window.destroy()
             self.ui_manager.show_data()
         except Exception as e:
+            self.log_manager.write_log(error_message=e)
             raise Exception(f"Error: {e}")
 
 
@@ -60,6 +63,7 @@ class AccountManager:
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to update account: {e}")
+            self.log_manager.write_log(error_message=e)
 
 
     # Delete an Account From Database
@@ -73,6 +77,7 @@ class AccountManager:
                 self.ui_manager.show_data()
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to delete account: {e}")
+                self.log_manager.write_log(error_message=e)
     
 
     # Delete Database

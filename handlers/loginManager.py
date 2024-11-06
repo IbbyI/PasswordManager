@@ -1,5 +1,3 @@
-import os
-import random
 import tkinter as tk
 import ttkbootstrap as tb
 from string import Template
@@ -8,26 +6,29 @@ from tkinter import messagebox
 from handlers.encryptionManager import EncryptionManager
 from handlers.emailManager import EmailManager
 from handlers.otpManager import OTPManager
+from handlers.logManager import LogManager
 
 
 class MasterLogin:
     def __init__(self, db_manager, login_success):
         self.db_manager = db_manager
-        self.encryption_manager = EncryptionManager()        
-        self.email_manager= EmailManager()
+        self.log_manager = LogManager()
+        self.encryption_manager = EncryptionManager(self.log_manager)        
+        self.email_manager= EmailManager(self.log_manager)
         self.otp_manager = OTPManager(self.email_manager)
 
         self.login_window = tk.Tk()
         self.login_window.title("Password Manager Login")
         self.login_window.resizable(False, False)
         self.login_window.geometry("320x220+550+150")
-
+        
         self.style = tb.Style()
         self.style.theme_use("cyborg")
 
         self.OTP = None
         self.mode(action="login")
         self.login_success = login_success
+
         self.login_window.mainloop()
 
 
@@ -116,6 +117,7 @@ class MasterLogin:
             password_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
             confirm_entry.config(highlightthickness=2, highlightbackground = "red", highlightcolor= "red")
             messagebox.showerror("Error", "Passwords do not match.")
+
     
 
     # Checks If Given Login Details Are Valid
@@ -150,12 +152,16 @@ class MasterLogin:
 
     # Handles New User Data
     def new_user_handler(self, email, password):
-        salt = self.encryption_manager.generate_salt()
-        hash = self.encryption_manager.hash_password(password, salt)
-        self.db_manager.create_new_user(email, hash, salt)
-        self.login_ui()
-        self.email_manager.send_email(email, file="./html/welcome.html")
-
+        try:
+            salt = self.encryption_manager.generate_salt()
+            hash = self.encryption_manager.hash_password(password, salt)
+            self.db_manager.create_new_user(email, hash, salt)
+            self.login_ui()
+            self.email_manager.send_email(email, file="./html/welcome.html")
+        except self.db_manager.sqlite3.IntegrityError:
+            messagebox.showerror("Account Already Exists", 
+                                "The email you entered is already registered.\nPlease log in or use the \"Forgot Password\" option to recover your account.")
+            self.logger.error(f"Account Already Exists: {email}")
 
     # Handles Updated User Data
     def update_user_handler(self, email, password):

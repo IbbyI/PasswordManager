@@ -3,10 +3,11 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 class EmailManager:
-    def __init__(self):
+    def __init__(self, log_manager):
+        self.log_manager = log_manager
         self.smtp_server = "smtp.gmail.com"
         self.smtp_port = 465
-    
+
 
     # Sends Email Using SMTP
     def send_email(self, recipient_email, file):
@@ -29,7 +30,7 @@ class EmailManager:
                 server.sendmail(sender_email, recipient_email, message.as_string())
             print("Email sent successfully.")
         except smtplib.SMTPResponseException as e:
-            print(f"Failed to send email: {e}")
+            self.log_manager.write_log(error_message=e)
 
 
     # Checks if Email is Valid

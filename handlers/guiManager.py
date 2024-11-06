@@ -21,6 +21,7 @@ class GUIManager:
         self.email_manager = EmailManager()
         self.account_manager = None
 
+
         self.columns = ["ID", "Email", "Username", "Password", "Application"]
         self.build_main_window()
 
@@ -193,6 +194,7 @@ class GUIManager:
                 self.data_button.configure(text="Hide Data", command=self.hide_data)
         except Exception as e:
             messagebox.showerror("Error", str(e))
+            self.logger.error(e)
             self.delete_button.configure(state="disabled")
             self.data_button.configure(state="disabled")
 

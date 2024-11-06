@@ -9,10 +9,12 @@ from handlers.guiManager import GUIManager
 from handlers.accountManager import AccountManager
 from handlers.loginManager import MasterLogin
 from handlers.otpManager import OTPManager
+from handlers.logManager import LogManager
 
 class PasswordManagerApp:
     def __init__(self):
-        self.db_manager = DatabaseManager()
+        self.log_manager = LogManager()
+        self.db_manager = DatabaseManager(self.log_manager)
         self.master_login = MasterLogin(self.db_manager, self.on_login_success)
 
 
@@ -22,12 +24,12 @@ class PasswordManagerApp:
         self.main_window.title("Password Manager")
         self.main_window.resizable(False, False)
 
-        self.email_manager = EmailManager()
-        self.encryption_manager = EncryptionManager()
+        self.email_manager = EmailManager(self.log_manager)
+        self.encryption_manager = EncryptionManager(self.log_manager)
         self.otp_manager = OTPManager(self.email_manager)
         self.password_generator = PasswordGenerator(self.main_window)
         self.ui_manager = GUIManager(self.main_window, self.db_manager)
-        self.account_manager = AccountManager(self.main_window, self.db_manager, self.encryption_manager, self.ui_manager, self.email_manager)
+        self.account_manager = AccountManager(self.main_window, self.db_manager, self.encryption_manager, self.ui_manager, self.email_manager, self.log_manager)
 
         self.main_window.protocol("WM_DELETE_WINDOW", self.ui_manager.on_closure)
         self.main_window.mainloop()
