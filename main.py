@@ -11,15 +11,24 @@ from handlers.loginManager import MasterLogin
 from handlers.otpManager import OTPManager
 from handlers.logManager import LogManager
 
+
 class PasswordManagerApp:
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Initializes the PasswordManagerApp instance.
+        - Sets up the logging manager (log_manager) to handle application logs.
+        - Initializes the database manager (db_manager), passing the log manager for error reporting and logging.
+        - Creates an instance of MasterLogin to manage user authentication, providing a callback (on_login_success) 
+        to handle successful logins.
+        """
         self.log_manager = LogManager()
         self.db_manager = DatabaseManager(self.log_manager)
         self.master_login = MasterLogin(self.db_manager, self.on_login_success)
 
-
     def on_login_success(self):
-        # Initialize Main Tkinter Window With Necessary Classes
+        """
+        Initialize Main Tkinter Window With Necessary Classes
+        """
         self.main_window = tk.Toplevel()
         self.main_window.title("Password Manager")
         self.main_window.resizable(False, False)
@@ -29,9 +38,19 @@ class PasswordManagerApp:
         self.otp_manager = OTPManager(self.email_manager)
         self.password_generator = PasswordGenerator(self.main_window)
         self.ui_manager = GUIManager(self.main_window, self.db_manager)
-        self.account_manager = AccountManager(self.main_window, self.db_manager, self.encryption_manager, self.ui_manager, self.email_manager, self.log_manager)
+        self.account_manager = AccountManager(
+            self.main_window,
+            self.db_manager,
+            self.encryption_manager,
+            self.ui_manager,
+            self.email_manager,
+            self.log_manager
+        )
 
-        self.main_window.protocol("WM_DELETE_WINDOW", self.ui_manager.on_closure)
+        self.main_window.protocol(
+            "WM_DELETE_WINDOW",
+            self.ui_manager.on_closure
+        )
         self.main_window.mainloop()
 
 
