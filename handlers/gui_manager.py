@@ -1,12 +1,14 @@
 import sys
 import tkinter as tk
+from typing import Any
 import ttkbootstrap as tb
 from tkinter import Menu, messagebox, ttk, filedialog
-from handlers.databaseManager import DatabaseManager
-from handlers.encryptionManager import EncryptionManager
-from handlers.accountManager import AccountManager
-from handlers.passwordGenerator import PasswordGenerator
-from handlers.emailManager import EmailManager
+from handlers.database_manager import DatabaseManager
+from handlers.encryption_manager import EncryptionManager
+from handlers.account_manager import AccountManager
+from handlers.password_generator import PasswordGenerator
+from handlers.email_manager import EmailManager
+from handlers.log_manager import LogManager
 
 
 class GUIManager:
@@ -19,10 +21,12 @@ class GUIManager:
 
         self.main_window = main_window
         self.db_manager = db_manager
-        self.encryption_manager = EncryptionManager()
+        self.log_manager = LogManager()
+        self.encryption_manager = EncryptionManager(self.log_manager)
         self.password_generator = PasswordGenerator(self.main_window)
-        self.email_manager = EmailManager()
-        self.account_manager = None
+        self.email_manager = EmailManager(self.log_manager)
+
+        self.initialize_account_manager()
 
         self.columns = ["ID", "Email", "Username", "Password", "Application"]
         self.build_main_window()
@@ -37,7 +41,8 @@ class GUIManager:
             self.db_manager,
             self.encryption_manager,
             self.ui_manager,
-            self.email_manager
+            self.email_manager,
+            self.log_manager
         )
 
     def on_closure(self) -> None:
@@ -46,19 +51,23 @@ class GUIManager:
         """
         confirm = messagebox.askokcancel(
             "Close Password Manager",
-            "Do you want to close the application?",
+            "Do you want to close the application?"
         )
-        if confirm == "yes":
+        if confirm:
             sys.exit()
 
     def get_selected(self, action="edit") -> None:
         """
         Retrieves Data From Selected Row.
         """
+        selected_data = []
         selected = self.tree.selection()
         if selected:
-            dict_data = self.tree.item(selected)
-            selected_data = dict_data["values"]
+            item_id = selected[0]
+            dict_data = self.tree.item(item_id)
+            selected_data = dict_data.get("values", [])
+            if not isinstance(selected_data, list):
+                selected_data = []
 
         if action == "edit":
             self.edit_account(selected_data)
@@ -69,7 +78,6 @@ class GUIManager:
         """
         Creates Main Window
         """
-        self.initialize_account_manager()
         self.tree = ttk.Treeview(
             self.main_window, columns=self.columns, show="headings", selectmode="browse")
         self.menu = Menu(self.main_window, tearoff=False)
@@ -149,7 +157,7 @@ class GUIManager:
                                   )
         submit_button.grid(row=5, column=1, columnspan=1)
 
-    def is_entry_empty(self, entry: tk.Entry) -> None:
+    def is_entry_empty(self, entry: list[tk.Entry]) -> None:
         """
         Highlight Empty Entry Wigits
         """
@@ -169,7 +177,7 @@ class GUIManager:
                 self.new_account_window
             )
 
-    def edit_account(self, data: list) -> None:
+    def edit_account(self, data: list[Any]) -> None:
         """
         Creates Edit Account Window
         """
@@ -251,7 +259,7 @@ class GUIManager:
                     text="Hide Data", command=self.hide_data)
         except Exception as e:
             messagebox.showerror("Error", str(e))
-            self.logger.error(e)
+            self.log_manager.write_log(error_message=str(e))
             self.delete_button.configure(state="disabled")
             self.data_button.configure(state="disabled")
 
