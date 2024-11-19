@@ -1,10 +1,10 @@
 import tkinter as tk
 import ttkbootstrap as tb
 from tkinter import messagebox
-from handlers.encryptionManager import EncryptionManager
-from handlers.emailManager import EmailManager
-from handlers.otpManager import OTPManager
-from handlers.logManager import LogManager
+from handlers.encryption_manager import EncryptionManager
+from handlers.email_manager import EmailManager
+from handlers.otp_manager import OTPManager
+from handlers.log_manager import LogManager
 
 
 class MasterLogin:
@@ -16,7 +16,7 @@ class MasterLogin:
         self.log_manager = LogManager()
         self.encryption_manager = EncryptionManager(self.log_manager)
         self.email_manager = EmailManager(self.log_manager)
-        self.otp_manager = OTPManager(self.email_manager)
+        self.otp_manager = OTPManager(self.email_manager, self.log_manager)
 
         self.login_window = tk.Tk()
         self.login_window.title("Password Manager Login")
@@ -290,7 +290,7 @@ class MasterLogin:
                 "Account Already Exists",
                 "The email you entered is already registered.\nPlease log in or use the \"Forgot Password\" option to recover your account."
             )
-            self.logger.error(f"Account Already Exists: {email}")
+            self.log_manager.write_log(f"Account Already Exists: {email}")
 
     def update_user_handler(self, email: str, password: str) -> None:
         """
@@ -331,7 +331,7 @@ class MasterLogin:
         results = self.db_manager.search_user(email)
         if results:
             otp = self.otp_manager.generate_otp()
-            self.otp_manager.send_email(email, otp)
+            self.otp_manager.send_email(email)
             messagebox.showinfo(
                 "One Time Password Sent",
                 "Please check your email for your OTP.",
@@ -374,7 +374,7 @@ class MasterLogin:
         """
         Handles ui changes after OTP verification.
         """
-        if self.otp_manager.verify_OTP(OTP):
+        if self.otp_manager.verify_otp(OTP):
             self.reset_password_window(email)
         else:
             messagebox.showerror("Wrong OTP", "Please Try Again.")

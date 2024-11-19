@@ -1,5 +1,6 @@
+from multiprocessing import connection
 import sqlite3
-from typing import Optional
+from typing import Any, Optional
 
 
 class DatabaseManager:
@@ -12,7 +13,7 @@ class DatabaseManager:
         self.log_manager = log_manager
         self._initiate_database()
 
-    def connect(self) -> None:
+    def connect(self) -> sqlite3.Connection:
         """
         Connects to local SQL database.
         """
@@ -101,7 +102,7 @@ class DatabaseManager:
             self.log_manager.write_log(error_message=e)
             raise Exception(f"Failed to Find User In Database: {e}")
 
-    def fetch_data(self) -> tuple:
+    def fetch_data(self) -> list[Any]:
         """
         Retrives data based on user_id.
         """
@@ -199,7 +200,7 @@ class DatabaseManager:
             self.log_manager.write_log(error_message=e)
             raise Exception(f"Failed to Delete Account From Database: {e}")
 
-    def delete_all(self) -> None:
+    def delete_all_accounts(self) -> None:
         """
         Deletes all accounts based on logged in user.
         """
@@ -207,21 +208,30 @@ class DatabaseManager:
             with self.connect() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
-                    "DELETE FROM accounts WHERE user_id = ?", (self.user_id,))
+                    "DELETE FROM accounts WHERE user_id = ?", (self.user_id,)
+                )
                 conn.commit()
         except sqlite3.Error as e:
             self.log_manager.write_log(error_message=e)
             raise Exception(f"Failed to Delete Database Table: {e}")
 
-    def check_db_for_data(self) -> list[tuple]:
+    def check_db_for_data(self) -> bool:
         """
-        Checks for data in database.
+        Checks for the existence of data in the 'accounts' table and returns bool.
         """
         with self.connect() as conn:
             cursor = conn.cursor()
-            cursor.execute('PRAGMA table_info(accounts)')
-            data = cursor.fetchall()
-            return data
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='accounts'"
+            )
+            table_exists = cursor.fetchone()
+
+            if not table_exists:
+                return False
+
+            cursor.execute("SELECT 1 FROM accounts LIMIT 1")
+            has_data = cursor.fetchone()
+            return bool(has_data)
 
     def get_email(self, user_id: int) -> Optional[tuple]:
         """

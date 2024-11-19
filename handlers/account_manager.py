@@ -1,5 +1,7 @@
+from sre_constants import ANY
 import tkinter as tk
 from tkinter import messagebox
+from typing import Any
 
 
 class AccountManager:
@@ -35,7 +37,7 @@ class AccountManager:
     def new_data_handler(
         self,
         all_entry: list[tk.Entry],
-        opt_in_bool: tk.BooleanVar,
+        opt_in_bool: tk.IntVar,
         window: tk.Toplevel,
     ) -> None:
         """
@@ -44,7 +46,7 @@ class AccountManager:
 
         try:
             new_acc_data = [entry.get() for entry in all_entry]
-            new_acc_data.append(opt_in_bool.get())
+            new_acc_data.append(str(opt_in_bool.get()))
 
             if not self.email_manager.is_valid_email(new_acc_data[0]):
                 messagebox.showwarning(
@@ -69,14 +71,13 @@ class AccountManager:
     def edit_data_handler(
         self,
         all_entry: list[tk.Entry],
-        selected_data: list,
-        opt_in_bool: tk.BooleanVar,
+        selected_data: list[Any],
+        opt_in_bool: tk.IntVar,
         window: tk.Toplevel,
     ) -> None:
         """
         Handle editing of an existing account by validating and updating the data.
         """
-
         edited_data = [entry.get() for entry in all_entry]
 
         if edited_data == selected_data[1:5]:
@@ -96,7 +97,7 @@ class AccountManager:
                     "Your Password has been leaked.\nConsider changing your password.",
                 )
 
-            edited_data.append(opt_in_bool.get())
+            edited_data.append(str(opt_in_bool.get()))
             encrypted_data = self.encryption_manager.encrypt(edited_data)
             self.db_manager.update_account(selected_data[0], encrypted_data)
 
@@ -107,7 +108,7 @@ class AccountManager:
             messagebox.showerror("Error", f"Failed to update account: {e}")
             self.log_manager.write_log(error_message=e)
 
-    def delete_account(self, selected_data: list) -> None:
+    def delete_account(self, selected_data: list[Any]) -> None:
         """
         Delete a specific account from the database after user confirmation.
         """
@@ -132,7 +133,7 @@ class AccountManager:
         """
         Delete all account data from the database after user confirmation.
         """
-        if self.db_manager.check_db_for_data() is None:
+        if not self.db_manager.check_db_for_data():
             messagebox.showerror("Error", "Error: 003 No Data to Delete.")
             self.ui_manager.refresh_tree_view()
             return
@@ -145,9 +146,10 @@ class AccountManager:
 
         if confirm == "yes":
             try:
-                self.db_manager.delete_all()
+                self.db_manager.delete_all_accounts()
                 self.ui_manager.refresh_tree_view()
             except Exception as e:
                 messagebox.showerror(
-                    "Error", f"Failed to delete all data: {e}")
+                    "Error", f"Failed to delete all data: {e}"
+                )
                 self.log_manager.write_log(error_message=e)

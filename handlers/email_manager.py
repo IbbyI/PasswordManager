@@ -20,8 +20,8 @@ class EmailManager:
         Sends email to recipient email using SMTP.
         """
         try:
-            sender_email = os.environ.get("email")
-            sender_password = os.environ.get("appsPassword")
+            sender_email = os.environ.get("email", "")
+            sender_password = os.environ.get("appsPassword", "")
             message = MIMEMultipart("alternative")
             message["Subject"] = "Password Manager"
             message["From"] = sender_email
