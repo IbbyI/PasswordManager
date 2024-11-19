@@ -1,15 +1,16 @@
 import tkinter as tk
 import ttkbootstrap as tb
 from tkinter import ttk
-from handlers.databaseManager import DatabaseManager
-from handlers.encryptionManager import EncryptionManager
-from handlers.passwordGenerator import PasswordGenerator
-from handlers.emailManager import EmailManager
-from handlers.guiManager import GUIManager
-from handlers.accountManager import AccountManager
-from handlers.loginManager import MasterLogin
-from handlers.otpManager import OTPManager
-from handlers.logManager import LogManager
+from handlers import log_manager
+from handlers.database_manager import DatabaseManager
+from handlers.encryption_manager import EncryptionManager
+from handlers.password_generator import PasswordGenerator
+from handlers.email_manager import EmailManager
+from handlers.gui_manager import GUIManager
+from handlers.account_manager import AccountManager
+from handlers.login_manager import MasterLogin
+from handlers.otp_manager import OTPManager
+from handlers.log_manager import LogManager
 
 
 class PasswordManagerApp:
@@ -24,8 +25,9 @@ class PasswordManagerApp:
         self.log_manager = LogManager()
         self.db_manager = DatabaseManager(self.log_manager)
         self.master_login = MasterLogin(self.db_manager, self.on_login_success)
+        self.main_window = None
 
-    def on_login_success(self):
+    def on_login_success(self) -> None:
         """
         Initialize Main Tkinter Window With Necessary Classes
         """
@@ -35,11 +37,11 @@ class PasswordManagerApp:
 
         self.email_manager = EmailManager(self.log_manager)
         self.encryption_manager = EncryptionManager(self.log_manager)
-        self.otp_manager = OTPManager(self.email_manager)
+        self.otp_manager = OTPManager(self.email_manager, self.log_manager)
         self.password_generator = PasswordGenerator(self.main_window)
         self.ui_manager = GUIManager(self.main_window, self.db_manager)
         self.account_manager = AccountManager(
-            self.main_window,
+            self.main_window,  # type: ignore
             self.db_manager,
             self.encryption_manager,
             self.ui_manager,
