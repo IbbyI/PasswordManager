@@ -1,16 +1,14 @@
 import tkinter as tk
-import ttkbootstrap as tb
-from tkinter import ttk
-from handlers import log_manager
-from handlers.database_manager import DatabaseManager
-from handlers.encryption_manager import EncryptionManager
-from handlers.password_generator import PasswordGenerator
-from handlers.email_manager import EmailManager
-from handlers.gui_manager import GUIManager
+
 from handlers.account_manager import AccountManager
+from handlers.database_manager import DatabaseManager
+from handlers.email_manager import EmailManager
+from handlers.encryption_manager import EncryptionManager
+from handlers.gui_manager import GUIManager
+from handlers.log_manager import LogManager
 from handlers.login_manager import MasterLogin
 from handlers.otp_manager import OTPManager
-from handlers.log_manager import LogManager
+from handlers.password_generator import PasswordGenerator
 
 
 class PasswordManagerApp:
@@ -19,7 +17,7 @@ class PasswordManagerApp:
         Initializes the PasswordManagerApp instance.
         - Sets up the logging manager (log_manager) to handle application logs.
         - Initializes the database manager (db_manager), passing the log manager for error reporting and logging.
-        - Creates an instance of MasterLogin to manage user authentication, providing a callback (on_login_success) 
+        - Creates an instance of MasterLogin to manage user authentication, providing a callback (on_login_success)
         to handle successful logins.
         """
         self.log_manager = LogManager()
@@ -41,18 +39,15 @@ class PasswordManagerApp:
         self.password_generator = PasswordGenerator(self.main_window)
         self.ui_manager = GUIManager(self.main_window, self.db_manager)
         self.account_manager = AccountManager(
-            self.main_window,  # type: ignore
+            self.main_window,
             self.db_manager,
             self.encryption_manager,
             self.ui_manager,
             self.email_manager,
-            self.log_manager
+            self.log_manager,
         )
 
-        self.main_window.protocol(
-            "WM_DELETE_WINDOW",
-            self.ui_manager.on_closure
-        )
+        self.main_window.protocol("WM_DELETE_WINDOW", self.ui_manager.on_closure)
         self.main_window.mainloop()
 
 
