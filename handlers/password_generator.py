@@ -1,6 +1,7 @@
-import tkinter as tk
-import string
 import secrets
+import string
+import tkinter as tk
+
 import pyperclip
 
 
@@ -28,9 +29,6 @@ class PasswordGenerator:
         """
         Generates Random Password Using Given Alphabet
         """
-        password = ''.join(
-            secrets.choice(self.alphabet)
-            for _ in range(length)
-        )
+        password = "".join(secrets.choice(self.alphabet) for _ in range(length))
         pyperclip.copy(password)
         return password
