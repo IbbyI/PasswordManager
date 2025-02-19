@@ -1,6 +1,7 @@
-from sre_constants import ANY
 import tkinter as tk
-from tkinter import messagebox
+from ttkbootstrap import ttk
+from sre_constants import ANY
+from tkinter import Variable, messagebox
 from typing import Any
 
 
@@ -11,7 +12,7 @@ class AccountManager:
 
     def __init__(
         self,
-        main_window: tk.Tk,
+        main_window,
         db_manager,
         encryption_manager,
         ui_manager,
@@ -36,7 +37,7 @@ class AccountManager:
 
     def new_data_handler(
         self,
-        all_entry: list[tk.Entry],
+        all_entry: list[ttk.Entry],
         opt_in_bool: tk.IntVar,
         window: tk.Toplevel,
     ) -> None:
@@ -59,18 +60,18 @@ class AccountManager:
                     "Weak Password",
                     "Your Password has been leaked.\nConsider changing your password.",
                 )
-
-            self.db_manager.insert_account(new_acc_data)
+            encrypted_data = self.encryption_manager.encrypt(new_acc_data)
+            self.db_manager.insert_account(encrypted_data)
             window.destroy()
             self.ui_manager.show_data()
 
-        except Exception as e:
-            self.log_manager.write_log(error_message=e)
-            raise Exception(f"Error: {e}")
+        except Exception as error:
+            self.log_manager.log("error", f"Could Not Create Account: {error}")
+            raise Exception(f"Could Not Create Account: {error}")
 
     def edit_data_handler(
         self,
-        all_entry: list[tk.Entry],
+        all_entry: list[ttk.Entry],
         selected_data: list[Any],
         opt_in_bool: tk.IntVar,
         window: tk.Toplevel,
@@ -104,9 +105,9 @@ class AccountManager:
             window.destroy()
             self.ui_manager.show_data()
 
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to update account: {e}")
-            self.log_manager.write_log(error_message=e)
+        except Exception as error:
+            messagebox.showerror("Error", f"Failed to update account: {error}")
+            self.log_manager.log("Error", f"Failed to update account: {error}")
 
     def delete_account(self, selected_data: list[Any]) -> None:
         """
@@ -123,11 +124,12 @@ class AccountManager:
 
         if confirm == "yes":
             try:
-                self.db_manager.delete_account(selected_data[0])
+                rows_affected = self.db_manager.delete_account(selected_data[0])
                 self.ui_manager.show_data()
-            except Exception as e:
-                messagebox.showerror("Error", f"Failed to delete account: {e}")
-                self.log_manager.write_log(error_message=e)
+                self.delete_data_email(rows_affected)
+            except Exception as error:
+                messagebox.showerror("Error", f"Failed to delete account: {error}")
+                self.log_manager.log("Error", f"Failed to delete account: {error}")
 
     def delete_all(self) -> None:
         """
@@ -140,16 +142,24 @@ class AccountManager:
 
         confirm = messagebox.askquestion(
             title="Delete All Data",
-            message="You're about to delete all data.\nDo you wish to proceed?",
+            message="You're about to delete all accounts.\nDo you wish to proceed?",
             icon="warning",
         )
 
         if confirm == "yes":
             try:
-                self.db_manager.delete_all_accounts()
+                rows_affected = self.db_manager.delete_all_accounts()
                 self.ui_manager.refresh_tree_view()
-            except Exception as e:
-                messagebox.showerror(
-                    "Error", f"Failed to delete all data: {e}"
-                )
-                self.log_manager.write_log(error_message=e)
+                self.delete_data_email(rows_affected)
+            except Exception as error:
+                messagebox.showerror("Error", f"Failed to delete all data: {error}")
+                self.log_manager.log("Error", f"Failed to delete all data: {error}")
+
+    def delete_data_email(self, rows: int) -> None:
+        """
+        Sends an email notification after deleting account data.
+        """
+        email = self.db_manager.get_email(self.user_id)[0]
+        self.email_manager.send_email(
+            email, file_path="./templates/delete_account.html", number_of_accounts=rows
+        )
