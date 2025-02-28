@@ -1,20 +1,26 @@
 import os
 import re
 import smtplib
+from string import Template
+from typing import Optional
+from threading import Thread
+
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from string import Template
-from threading import Thread
-from typing import Optional
-
-import requests
 from premailer import Premailer
+from handlers.log_manager import LogManager
 
 
 class EmailManager:
-    def __init__(self, log_manager) -> None:
+    """
+    Manages SMTP settings as well as formatting, composing, and sending emails
+    """
+
+    def __init__(self, log_manager: LogManager) -> None:
         """
         Manages password strength, email sending & validation.
+        Args:
+            log_manager: The log manager object.
         """
         self.log_manager = log_manager
         self.smtp_server = "smtp.gmail.com"
@@ -29,10 +35,15 @@ class EmailManager:
     ) -> None:
         """
         Sends an email to the recipient using SMTP.
+        Args:
+            recipient_email (str): The recipient's email address.
+            file_path (str): The path to the email template file.
+            otp (int, optional): The OTP to be sent. Defaults to None.
+            number_of_accounts (int, optional): The number of accounts to be sent. Defaults to None.
         """
         try:
             sender_email = os.environ.get("email", "")
-            sender_password = os.environ.get("appsPassword", "")
+            sender_password = os.environ.get("app_password", "")
 
             message = MIMEMultipart("alternative")
             message["Subject"] = "Password Manager"
@@ -60,7 +71,7 @@ class EmailManager:
             with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port) as server:
                 server.login(sender_email, sender_password)
                 server.sendmail(sender_email, recipient_email, message.as_string())
-
+            self.log_manager.log("Error", "email test for log")
             print("Email sent successfully.")
         except smtplib.SMTPResponseException as error:
             self.log_manager.log("Error", f"Could Not Send Email: {error}")
@@ -68,30 +79,23 @@ class EmailManager:
     def send_email_thread(self, email: str, formatted_html: str) -> None:
         """
         Starts a thread to send an email.
+        Args:
+            email (str): The recipient's email address.
+            formatted_html (str): The formatted HTML content to be sent.
         """
         Thread(target=self.send_email, args=(email, formatted_html, False)).start()
 
     def is_valid_email(self, email: str) -> bool:
         """
         Checks if given email is valid using regex.
+        Args:
+            email (str): The email to be validated.
+        Returns:
+            bool: True if email is valid, False otherwise.
         """
         regex = re.compile(
             r"^[a-zA-Z0-9.!#$%&` *+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"
         )
         if regex.match(email):
-            return True
-        return False
-
-    def strength(self, password: str) -> bool:
-        """
-        Compares given password to pwned password list.
-        """
-        url = (
-            "https://www.ncsc.gov.uk/static-assets/documents/PwnedPasswordsTop100k.json"
-        )
-        response = requests.get(url)
-        pass_list = set(response.json())
-
-        if password in pass_list:
             return True
         return False
