@@ -2,3 +2,4 @@ database.db
 __pycache__/
 py_log.log
 .vscode/
+/logs/app.log
