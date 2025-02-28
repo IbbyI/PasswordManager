@@ -69,7 +69,7 @@ python3 main.py
 - Login to your account.
 - Create a new app-specific password and name it Password Manager.
 - Insert your email into an environment variable named **email**.
-- Insert your apps password into an environment variable named **appsPassword**.
+- Insert your apps password into an environment variable named **app_password**.
 
 ## Adding Accounts
 - Click the **Add Account** button.
