@@ -1,8 +1,20 @@
 import logging
+from pathlib import Path
 
 
 class LogManager:
-    def __init__(self, log_file="/logs/app.log") -> None:
+    """
+    LogManager class is used to log messages to a file and console.
+    """
+
+    def __init__(self, log_file="./logs/app.log") -> None:
+        """
+        Initialize the LogManager with a log file.
+        Args:
+            log_file: The path to the log file.
+        """
+        Path("./logs/").mkdir(parents=True, exist_ok=True)
+
         self.logger = logging.getLogger("PasswordManager")
         self.logger.setLevel(logging.DEBUG)
 
@@ -17,6 +29,12 @@ class LogManager:
         self.logger.addHandler(console_handler)
 
     def log(self, level: str, message: str) -> None:
+        """
+        Log messages to the file and console.
+        Args:
+            level (str): The log level.
+            message (str): The message to be logged.
+        """
         if level == "info":
             self.logger.info(message)
         elif level == "warning":
