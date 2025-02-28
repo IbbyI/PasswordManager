@@ -1,8 +1,6 @@
-import tkinter as tk
-from ttkbootstrap import ttk
-from sre_constants import ANY
-from tkinter import Variable, messagebox
-from typing import Any
+import customtkinter as ctk
+from tkinter import messagebox
+from typing import Optional
 
 
 class AccountManager:
@@ -13,38 +11,52 @@ class AccountManager:
     def __init__(
         self,
         main_window,
-        db_manager,
+        database_manager,
         encryption_manager,
-        ui_manager,
+        gui_manager,
         email_manager,
         log_manager,
+        password_strength,
     ) -> None:
         """
         Initialize the AccountManager with dependencies and user information.
+
+        Args:
+            main_window: The main window of the application.
+            database_manager: The database manager object.
+            encryption_manager: The encryption manager object.
+            gui_manager: The UI manager object.
+            email_manager: The email manager object.
+            log_manager: The log manager object.
         """
         self.main_window = main_window
-        self.db_manager = db_manager
+        self.database_manager = database_manager
         self.encryption_manager = encryption_manager
-        self.ui_manager = ui_manager
+        self.gui_manager = gui_manager
         self.email_manager = email_manager
         self.log_manager = log_manager
+        self.passsword_strength = password_strength
 
-        self.user_id = self.db_manager.get_user_id()
-        self.tuple_email = self.db_manager.get_email(self.user_id)
-        self.email = self.tuple_email[0]
+        self.user_id = self.database_manager.get_user_id()
+        self.tuple_email = self.database_manager.get_email(self.user_id)
+        if self.tuple_email:
+            self.email = self.tuple_email[0]
 
         self.columns = ["ID", "Email", "Username", "Password", "Application"]
 
     def new_data_handler(
         self,
-        all_entry: list[ttk.Entry],
-        opt_in_bool: tk.IntVar,
-        window: tk.Toplevel,
+        all_entry: list[ctk.CTkEntry],
+        opt_in_bool: ctk.IntVar,
+        window: ctk.CTkToplevel,
     ) -> None:
         """
         Handle creation of a new account by validating and saving the data.
+        Args:
+            all_entry (list[tctk.CTkEntry]): A list of all entry widgets in the window.
+            opt_in_bool (tk.IntVar): A boolean variable to check if the user has opted in for newsletters.
+            window (tk.Toplevel): The new account window object to be destroyed after saving the data.
         """
-
         try:
             new_acc_data = [entry.get() for entry in all_entry]
             new_acc_data.append(str(opt_in_bool.get()))
@@ -55,15 +67,15 @@ class AccountManager:
                 )
                 return
 
-            if self.email_manager.strength(new_acc_data[2]):
+            if self.passsword_strength.check_pwned_list(new_acc_data[2]):
                 messagebox.showwarning(
                     "Weak Password",
                     "Your Password has been leaked.\nConsider changing your password.",
                 )
             encrypted_data = self.encryption_manager.encrypt(new_acc_data)
-            self.db_manager.insert_account(encrypted_data)
+            self.database_manager.insert_account(encrypted_data)
             window.destroy()
-            self.ui_manager.show_data()
+            self.gui_manager.show_data()
 
         except Exception as error:
             self.log_manager.log("error", f"Could Not Create Account: {error}")
@@ -71,13 +83,18 @@ class AccountManager:
 
     def edit_data_handler(
         self,
-        all_entry: list[ttk.Entry],
-        selected_data: list[Any],
-        opt_in_bool: tk.IntVar,
-        window: tk.Toplevel,
+        all_entry: list[ctk.CTkEntry],
+        selected_data: list[int | str],
+        opt_in_bool: ctk.IntVar,
+        window: ctk.CTkToplevel,
     ) -> None:
         """
         Handle editing of an existing account by validating and updating the data.
+        Args:
+            all_entry (list[ctk.CTkEntry]): A list of all entry widgets in the window.
+            selected_data (list[int | str]]): The data of the selected account to be edited.
+            opt_in_bool (Ctk.IntVar): A boolean variable to check if the user has opted in for newsletters.
+            window (ctk.CTkToplevel): The edit account window object to be destroyed after saving the data.
         """
         edited_data = [entry.get() for entry in all_entry]
 
@@ -92,7 +109,7 @@ class AccountManager:
             return
 
         try:
-            if self.email_manager.strength(edited_data[2]):
+            if self.passsword_strength.check_pwned_list(edited_data[2]):
                 messagebox.showwarning(
                     "Weak Password",
                     "Your Password has been leaked.\nConsider changing your password.",
@@ -100,18 +117,20 @@ class AccountManager:
 
             edited_data.append(str(opt_in_bool.get()))
             encrypted_data = self.encryption_manager.encrypt(edited_data)
-            self.db_manager.update_account(selected_data[0], encrypted_data)
+            self.database_manager.update_account(int(selected_data[0]), encrypted_data)
 
             window.destroy()
-            self.ui_manager.show_data()
+            self.gui_manager.show_data()
 
         except Exception as error:
             messagebox.showerror("Error", f"Failed to update account: {error}")
             self.log_manager.log("Error", f"Failed to update account: {error}")
 
-    def delete_account(self, selected_data: list[Any]) -> None:
+    def delete_account(self, selected_data: list[int | str]) -> None:
         """
         Delete a specific account from the database after user confirmation.
+        Args:
+            selected_data (list[int | str]): The data of the selected account to be deleted.
         """
         if not selected_data:
             return
@@ -124,9 +143,10 @@ class AccountManager:
 
         if confirm == "yes":
             try:
-                rows_affected = self.db_manager.delete_account(selected_data[0])
-                self.ui_manager.show_data()
-                self.delete_data_email(rows_affected)
+                rows_affected = self.database_manager.delete_account(selected_data[0])
+                self.gui_manager.show_data()
+                if rows_affected:
+                    self.delete_data_email(rows_affected)
             except Exception as error:
                 messagebox.showerror("Error", f"Failed to delete account: {error}")
                 self.log_manager.log("Error", f"Failed to delete account: {error}")
@@ -135,9 +155,9 @@ class AccountManager:
         """
         Delete all account data from the database after user confirmation.
         """
-        if not self.db_manager.check_db_for_data():
+        if not self.database_manager.check_db_for_data():
             messagebox.showerror("Error", "Error: 003 No Data to Delete.")
-            self.ui_manager.refresh_tree_view()
+            self.gui_manager.refresh_tree_view()
             return
 
         confirm = messagebox.askquestion(
@@ -148,9 +168,10 @@ class AccountManager:
 
         if confirm == "yes":
             try:
-                rows_affected = self.db_manager.delete_all_accounts()
-                self.ui_manager.refresh_tree_view()
-                self.delete_data_email(rows_affected)
+                rows_affected = self.database_manager.delete_all_accounts()
+                self.gui_manager.refresh_tree_view()
+                if rows_affected:
+                    self.delete_data_email(rows_affected)
             except Exception as error:
                 messagebox.showerror("Error", f"Failed to delete all data: {error}")
                 self.log_manager.log("Error", f"Failed to delete all data: {error}")
@@ -158,8 +179,16 @@ class AccountManager:
     def delete_data_email(self, rows: int) -> None:
         """
         Sends an email notification after deleting account data.
+        Args:
+            rows (int): The number of rows deleted in the database.
         """
-        email = self.db_manager.get_email(self.user_id)[0]
-        self.email_manager.send_email(
-            email, file_path="./templates/delete_account.html", number_of_accounts=rows
-        )
+        email_tuple = self.database_manager.get_email(self.user_id)
+        if email_tuple:
+            email = email_tuple[0]
+            self.email_manager.send_email(
+                email,
+                file_path="./templates/delete_account.html",
+                number_of_accounts=rows,
+            )
+        else:
+            self.log_manager.log("Error", f"Could not send email for {self.user_id}")
