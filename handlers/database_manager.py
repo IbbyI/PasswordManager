@@ -2,13 +2,21 @@ import sqlite3
 from tkinter import messagebox
 from typing import Any, Optional
 
+from handlers.log_manager import LogManager
+
 
 class DatabaseManager:
-    def __init__(self, log_manager) -> None:
+    """
+    Manages database operations including creating, editing, deleting, and searching.
+    """
+
+    def __init__(self, log_manager: LogManager) -> None:
         """
         Manages database operations including creating, deleting, searching and editing master users and accounts.
+        Args:
+            log_manager: The log manager object.
         """
-        self.db_name = "/database/database.db"
+        self.db_name = "./database/database.db"
         self.user_id = None
         self.log_manager = log_manager
         self._initiate_database()
@@ -16,6 +24,8 @@ class DatabaseManager:
     def connect(self) -> sqlite3.Connection:
         """
         Connects to local SQL database.
+        Returns:
+            Connection: SQL Connection object to the database.
         """
         try:
             connection = sqlite3.connect(self.db_name)
@@ -67,6 +77,10 @@ class DatabaseManager:
     ) -> None:
         """
         Creates a master user by validating, hashing and saving the data.
+        Args:
+            email (str): The email address of the user.
+            hash (bytes): The hashed password of the user.
+            salt (bytes): The salt used to hash the password
         """
         try:
             with self.connect() as conn:
@@ -91,6 +105,10 @@ class DatabaseManager:
     def search_user(self, email: str) -> Optional[tuple]:
         """
         Searches database if email already exists.
+        Args:
+            email (str): The email address of the user.
+        Returns:
+            Optional[tuple]: A tuple containing the user_id, salt and hash of the user if found, else None.
         """
         try:
             with self.connect() as conn:
@@ -113,6 +131,8 @@ class DatabaseManager:
     def fetch_data(self) -> list[Any]:
         """
         Retrives data based on user_id.
+        Returns:
+            list[Any]: A list of all accounts linked to the user_id.
         """
         self.user_id = self.get_user_id()
         if self.user_id is None:
@@ -133,6 +153,8 @@ class DatabaseManager:
     def insert_account(self, data: list) -> None:
         """
         Inserts account into database.
+        Args:
+            data (list): List of account data to be inserted.
         """
         self.user_id = self.get_user_id()
         if self.user_id is None:
@@ -167,6 +189,10 @@ class DatabaseManager:
     ) -> None:
         """
         Updates users data.
+        Args:
+            email (str): The email address of the user.
+            hash (bytes): The hashed password of the user.
+            salt (bytes): The salt used to hash the password
         """
         try:
             with self.connect() as conn:
@@ -184,6 +210,9 @@ class DatabaseManager:
     def update_account(self, account_id: int, data: list) -> None:
         """
         Updates account data.
+        Args:
+            account_id (int): The account_id of the account to be updated.
+            data (list): List of account data to be updated
         """
         try:
             with self.connect() as conn:
@@ -208,9 +237,13 @@ class DatabaseManager:
             self.log_manager.log("error", f"Failed to Update Account: {error}")
             raise Exception(f"Failed to Update Account: {error}")
 
-    def delete_account(self, account_id) -> int | None:
+    def delete_account(self, account_id) -> Optional[int]:
         """
         Deletes account based on account_id
+        Args:
+            account_id: The account_id of the account to be deleted.
+        Returns:
+            int: The number of rows
         """
         try:
             with self.connect() as conn:
@@ -229,6 +262,8 @@ class DatabaseManager:
     def delete_all_accounts(self) -> Optional[int]:
         """
         Deletes all accounts based on logged in user.
+        Returns:
+            int: The number of rows deleted.
         """
         try:
             with self.connect() as conn:
@@ -245,6 +280,8 @@ class DatabaseManager:
     def check_db_for_data(self) -> bool:
         """
         Checks for the existence of data in the 'accounts' table and returns bool.
+        Returns:
+            bool: True if data exists, else False.
         """
         with self.connect() as conn:
             cursor = conn.cursor()
@@ -263,6 +300,10 @@ class DatabaseManager:
     def get_email(self, user_id: int) -> Optional[tuple]:
         """
         Retrieves email linked to user_id.
+        Args:
+            user_id (int): The user_id of the user.
+        Returns:
+            Optional[tuple]: A tuple containing the email of the user if found, else None.
         """
         try:
             with self.connect() as conn:
@@ -277,6 +318,8 @@ class DatabaseManager:
     def get_user_id(self) -> int:
         """
         Retrieves user_id for current instance.
+        Returns:
+            int: The user_id of the current
         """
         if self.user_id is not None:
             return self.user_id
@@ -287,6 +330,10 @@ class DatabaseManager:
     def set_user_id(self, user_id: int) -> int:
         """
         Sets user_id for current instance.
+        Args:
+            user_id (int): The user_id of the user.
+        Returns:
+            int: The user_id of the current instance.
         """
         self.user_id = user_id
         return self.user_id
