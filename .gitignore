@@ -3,3 +3,4 @@ __pycache__/
 py_log.log
 .vscode/
 /logs/app.log
+bfg-1.15.0.jar
