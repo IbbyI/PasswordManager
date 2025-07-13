@@ -3,4 +3,5 @@ __pycache__/
 .logs/app.log
 .venv/
 ./assets/wordlists/password_list.txt
-./assets/img/
+/assets/img/
+assets/img/icon.png
