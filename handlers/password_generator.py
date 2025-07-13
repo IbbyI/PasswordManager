@@ -53,10 +53,25 @@ class PasswordGenerator:
 
         self.pwd_gen_window = ctk.CTkToplevel()
         self.pwd_gen_window.focus()
-        self.pwd_gen_window.geometry("450x150")
+        self.pwd_gen_window.geometry("800x390")
         self.pwd_gen_window.attributes("-topmost", True)
         self.pwd_gen_window.resizable(False, False)
         self.pwd_gen_window.title("Password Generator")
+        self.pwd_gen_window.configure(
+            bg_color="#242424",
+            fg_color="#242424",
+        )
+
+        pwd_gen_frame = ctk.CTkFrame(
+            self.pwd_gen_window, fg_color="#242424", bg_color="#242424"
+        )
+
+        options_frame = ctk.CTkFrame(
+            self.pwd_gen_window, fg_color="#242424", bg_color="#242424"
+        )
+
+        pwd_gen_frame.pack(side="top", pady=10, padx=10)
+        options_frame.pack(side="bottom", pady=10, padx=10)
 
         self.include_special = ctk.BooleanVar()
         self.include_caps = ctk.BooleanVar()
@@ -64,35 +79,49 @@ class PasswordGenerator:
 
         password_length = ctk.IntVar(value=16)
 
-        entry = ctk.CTkEntry(self.pwd_gen_window, width=180)
+        entry = ctk.CTkEntry(
+            pwd_gen_frame,
+            width=250,
+            height=50,
+            font=("Arial", 25),
+            placeholder_text="Generated Password",
+        )
+
         slider = ctk.CTkSlider(
-            self.pwd_gen_window,
-            command=lambda value: password_length.set(int(value)),
+            pwd_gen_frame,
             from_=8,
             to=24,
             orientation="horizontal",
             number_of_steps=16,
+            width=200,
+            height=20,
+            command=lambda value: password_length.set(int(value)),
         )
-        slider_value = ctk.CTkLabel(self.pwd_gen_window, textvariable=password_length)
+        slider_value = ctk.CTkLabel(
+            pwd_gen_frame, font=("Arial", 25), textvariable=password_length
+        )
         slider.set(password_length.get())
 
         option_special = ctk.CTkCheckBox(
-            self.pwd_gen_window,
+            options_frame,
             text="Include Special Characters?",
             variable=self.include_special,
             command=self.update_alphabet,
+            font=("Arial", 28),
         )
         option_caps = ctk.CTkCheckBox(
-            self.pwd_gen_window,
+            options_frame,
             text="Include Uppercase Letters?",
             variable=self.include_caps,
             command=self.update_alphabet,
+            font=("Arial", 28),
         )
         option_numbers = ctk.CTkCheckBox(
-            self.pwd_gen_window,
+            options_frame,
             text="Include Numbers?",
             variable=self.include_numbers,
             command=self.update_alphabet,
+            font=("Arial", 28),
         )
 
         def on_generate(event=None) -> None:
@@ -104,14 +133,20 @@ class PasswordGenerator:
             entry.insert(0, password)
 
         generate_pwd_button = ctk.CTkButton(
-            self.pwd_gen_window, text="Generate Password", command=on_generate
+            pwd_gen_frame,
+            text="Generate Password",
+            command=on_generate,
+            font=("Arial", 25),
+            width=250,
+            height=50,
         )
         self.pwd_gen_window.bind("<Return>", on_generate)
 
-        entry.grid(row=1, column=3, padx=25, pady=15, sticky="s")
-        slider.grid(row=2, column=3, sticky="n")
-        slider_value.grid(row=3, column=3, sticky="n")
-        generate_pwd_button.grid(row=4, column=3, sticky="n")
-        option_special.grid(row=2, column=5, columnspan=2, sticky="w")
-        option_caps.grid(row=3, column=5, columnspan=2, sticky="w")
-        option_numbers.grid(row=4, column=5, columnspan=2, sticky="w")
+        entry.pack(side="top", padx=10, pady=2)
+        slider.pack(side="top", padx=10, pady=10)
+        slider_value.pack(side="top", padx=10, pady=2)
+        generate_pwd_button.pack(side="top", padx=10, pady=15)
+
+        option_special.pack(side="top", padx=10, pady=2)
+        option_caps.pack(side="top", padx=10, pady=2)
+        option_numbers.pack(side="top", padx=10, pady=2)
