@@ -1,5 +1,6 @@
 import customtkinter as ctk
-from tkinter import BOTTOM, messagebox
+from threading import Thread
+from tkinter import BOTTOM, messagebox, font
 
 from handlers.database_manager import DatabaseManager
 from handlers.email_manager import EmailManager
@@ -31,7 +32,7 @@ class LoginManager:
         self.login_window = ctk.CTk()
         self.login_window.title("Password Manager")
         self.login_window.resizable(False, False)
-        self.login_window.geometry("360x310+550+150")
+        self.login_window.geometry("570x540+550+150")
 
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("dark-blue")
@@ -44,11 +45,13 @@ class LoginManager:
 
         self.login_window.mainloop()
 
-    def switch_mode(self, action="signup") -> None:
+    def switch_mode(self, action: str = "signup") -> None:
         """
         Switches UI mode dynamically.
         Args:
-            action (str): The action to perform.
+            action (str): The action to perform. One of "signup", "login", "forgot_password", "otp_check", "reset_password".
+        Returns:
+            None
         """
         if self.current_frame:
             self.current_frame.destroy()
@@ -65,7 +68,7 @@ class LoginManager:
             self.reset_password_ui()
 
     def create_label_entry(
-        self, frame: ctk.CTkFrame, label_text, show: str | None = None
+        self, frame: ctk.CTkFrame, label_text: str, show: str | None = None
     ) -> ctk.CTkEntry:
         """
         Creates and returns a label and entry widget pair.
@@ -76,13 +79,17 @@ class LoginManager:
         Returns:
             ctk.CTkEntry: The entry widget created.
         """
-        ctk.CTkLabel(frame, text=label_text).pack(pady=2)
+        ctk.CTkLabel(
+            frame, text=label_text, font=("Arial", 25), width=200, height=43
+        ).pack(pady=10)
         entry = ctk.CTkEntry(
             frame,
             show=show if show is not None else "",
-            width=150,
-            bg_color="#242525",
-            fg_color="#242525",
+            width=225,
+            height=43,
+            font=("Arial", 25),
+            bg_color="#242424",
+            fg_color="#242424",
         )
         entry.pack(pady=2)
         return entry
@@ -90,14 +97,23 @@ class LoginManager:
     def signup_ui(self) -> None:
         """
         Creates the sign-up UI widgets.
+        Returns:
+            None
         """
-        self.bottom_frame.forget()
-        frame = ctk.CTkFrame(self.login_window, fg_color="#242525")
+        for widget in self.login_window.winfo_children():
+            widget.destroy()
+
+        frame = ctk.CTkFrame(self.login_window, fg_color="#242424")
         frame.focus()
         frame.pack()
         self.current_frame = frame
 
         self.login_window.title("Password Manager Signup")
+
+        def register_user():
+            self.validate_user(
+                email_entry, password_entry, confirm_password_entry, action="new"
+            )
 
         email_entry = self.create_label_entry(frame, "Enter your Email:")
         password_entry = self.create_label_entry(
@@ -107,32 +123,51 @@ class LoginManager:
             frame, "Confirm your Password:", show="*"
         )
 
+        bottom_frame = ctk.CTkFrame(self.login_window, fg_color="#242424")
+        bottom_frame.pack(side="bottom", fill="x", pady=10)
+
         ctk.CTkButton(
             frame,
             text="Register",
-            command=lambda: self.validate_user(
-                email_entry, password_entry, confirm_password_entry, action="new"
-            ),
-        ).pack(pady=25)
-        ctk.CTkButton(
-            frame, text="Login", command=lambda: self.switch_mode("login")
-        ).pack(side=ctk.BOTTOM)
+            command=register_user,
+            width=170,
+            height=43,
+            font=("Arial", 25),
+        ).pack(pady=10)
 
-        frame.bind(
-            "<Return>",
-            lambda event: self.validate_user(
-                email_entry, password_entry, confirm_password_entry, action="new"
-            ),
-        )
+        ctk.CTkButton(
+            bottom_frame,
+            text="Generate Password",
+            width=205,
+            height=43,
+            font=("Arial", 25),
+            command=lambda: self.password_generator.generate_window(),
+        ).pack(pady=2, side=ctk.BOTTOM)
+
+        ctk.CTkButton(
+            bottom_frame,
+            text="Login",
+            width=235,
+            height=43,
+            command=lambda: self.switch_mode("login"),
+            font=("Arial", 25),
+        ).pack(pady=5, side=ctk.BOTTOM)
+
+        frame.bind("<Return>", lambda event: register_user())
 
     def login_ui(self) -> None:
         """
         Creates login UI widgets.
+        Returns:
+            None
         """
+        for widget in self.login_window.winfo_children():
+            widget.destroy()
+
         frame = ctk.CTkFrame(
             self.login_window,
-            bg_color="#242525",
-            fg_color="#242525",
+            bg_color="#242424",
+            fg_color="#242424",
         )
         frame.focus()
         frame.pack()
@@ -142,23 +177,36 @@ class LoginManager:
 
         email_entry = self.create_label_entry(frame, "Email")
         password_entry = self.create_label_entry(frame, "Password", show="*")
-        ctk.CTkButton(
+        email_entry.focus()
+
+        self.login_button = ctk.CTkButton(
             frame,
             text="Log In",
+            width=170,
+            height=43,
+            font=("Arial", 25),
             command=lambda: self.credentials_check(email_entry, password_entry),
-        ).pack(pady=5)
+        )
+        self.login_button.pack(pady=15)
 
-        self.bottom_frame = ctk.CTkFrame(self.login_window, fg_color="#242525")
-        self.bottom_frame.pack(side=BOTTOM, pady=10)
+        bottom_frame = ctk.CTkFrame(self.login_window, fg_color="#242424")
+        bottom_frame.pack(side=BOTTOM, pady=10)
 
         ctk.CTkButton(
-            self.bottom_frame,
+            bottom_frame,
             text="Sign Up",
+            width=205,
+            height=43,
+            font=("Arial", 25),
             command=lambda: self.switch_mode("signup"),
         ).pack(pady=2)
+
         ctk.CTkButton(
-            self.bottom_frame,
+            bottom_frame,
             text="Forgot Password",
+            width=170,
+            height=43,
+            font=("Arial", 25),
             command=lambda: self.switch_mode("forgot_password"),
         ).pack(pady=2)
 
@@ -172,76 +220,134 @@ class LoginManager:
         email_entry: ctk.CTkEntry,
         password_entry: ctk.CTkEntry,
         confirm_entry: ctk.CTkEntry,
-        action="new",
+        action: str = "new",
     ) -> None:
         """
-        Validates user data.
+        Validates user data with optimized checks.
         Args:
             email_entry (ctk.CTkEntry): The email entry widget.
             password_entry (ctk.CTkEntry): The password entry widget.
             confirm_entry (ctk.CTkEntry): The confirm password entry widget.
             action (str): The action to perform. Defaults to "new".
+        Returns:
+            None
         """
-        email = email_entry.get()
+        email = email_entry.get().strip()
         password = password_entry.get()
         confirm_password = confirm_entry.get()
 
-        if not self.email_manager.is_valid_email(email):
-            messagebox.showwarning(
-                "Invalid Email", "Please enter a valid email address."
-            )
+        if not email or not password or not confirm_password:
+            messagebox.showerror("Error", "All fields are required")
+            return
+
+        if password != confirm_password:
+            messagebox.showerror("Error", "Passwords do not match")
             return
 
         if len(password) < 8:
-            messagebox.showerror("Error", "Choose a stronger password.")
+            messagebox.showerror(
+                "Error", "Choose a stronger password (min 8 characters)"
+            )
             return
 
-        if password == confirm_password:
-            handler = (
-                self.new_user_handler if action == "new" else self.update_user_handler
+        if not self.email_manager.is_valid_email(email):
+            messagebox.showwarning(
+                "Invalid Email", "Please enter a valid email address"
             )
-            handler(email, password)
-        else:
-            messagebox.showerror("Error", "Passwords do not match.")
+            return
+        handler = self.new_user_handler if action == "new" else self.update_user_handler
+        handler(email, password)
 
     def credentials_check(
         self, email_entry: ctk.CTkEntry, password_entry: ctk.CTkEntry
     ) -> None:
         """
-        Validates login credentials.
+        Validates login credentials asynchronously.
         Args:
             email_entry (ctk.CTkEntry): The email entry widget.
             password_entry (ctk.CTkEntry): The password entry widget.
+        Returns:
+            None
         """
         email = email_entry.get()
         password = password_entry.get()
-
         if not self.email_manager.is_valid_email(email):
             messagebox.showwarning(
                 "Invalid Email", "Please enter a valid email address."
             )
             return
 
-        results = self.database_manager.search_user(email)
-        if not results:
-            messagebox.showerror("Invalid Credentials", "Incorrect email or password.")
-            return
+        self.login_button.configure(state="disabled", text="Checking...")
 
-        user_id, stored_salt, stored_hash = results
-        if self.encryption_manager.hash_password(password, stored_salt) != stored_hash:
-            messagebox.showerror("Invalid Credentials", "Incorrect email or password.")
-            return
+        def check_credentials_thread():
+            try:
+                results = self.database_manager.search_user(email)
+                if not results:
+                    self.login_window.after(
+                        0,
+                        lambda: messagebox.showerror(
+                            "Invalid Credentials", "Incorrect email or password."
+                        ),
+                    )
+                    self.login_window.after(
+                        0,
+                        lambda: self.login_button.configure(
+                            state="normal", text="Log In"
+                        ),
+                    )
+                    return
+                user_id, stored_hash = results
 
-        self.database_manager.set_user_id(user_id)
-        self.login_window.withdraw()
-        self.login_success()
+                def on_verification_complete(is_valid):
+                    if is_valid:
+                        if user_id is not None:
+                            self.database_manager.set_user_id(user_id)
+                            self.user_id = user_id
+                        else:
+                            raise ValueError("User ID cannot be None")
+                        self.login_window.withdraw()
+                        self.login_success()
+                    else:
+                        self.login_window.after(
+                            0,
+                            lambda: messagebox.showerror(
+                                "Invalid Credentials", "Incorrect email or password."
+                            ),
+                        )
+                        self.login_window.after(
+                            0,
+                            lambda: self.login_button.configure(
+                                state="normal", text="Log In"
+                            ),
+                        )
+
+                is_valid = self.encryption_manager.verify_password(
+                    password, stored_hash
+                )
+                self.login_window.after(0, lambda: on_verification_complete(is_valid))
+
+            except Exception as e:
+                self.log_manager.log("Error", f"Login error: {e}")
+                self.login_window.after(
+                    0, lambda: messagebox.showerror("Error", f"Login failed: {str(e)}")
+                )
+                self.login_window.after(
+                    0,
+                    lambda: self.login_button.configure(state="normal", text="Log In"),
+                )
+
+        Thread(target=check_credentials_thread, daemon=True).start()
 
     def forgot_password(self) -> None:
         """
         Creates forgot password UI widgets.
+        Returns:
+            None
         """
-        self.bottom_frame.pack_forget()
-        frame = ctk.CTkFrame(self.login_window, fg_color="#242525")
+        for widget in self.login_window.winfo_children():
+            widget.destroy()
+
+        frame = ctk.CTkFrame(self.login_window, fg_color="#242424")
         frame.focus()
         frame.pack()
         self.current_frame = frame
@@ -252,19 +358,36 @@ class LoginManager:
         ctk.CTkButton(
             frame,
             text="Reset Password",
+            width=170,
+            height=43,
+            font=("Arial", 25),
             command=lambda: self.handle_reset(email_entry.get()),
-        ).pack(pady=5)
+        ).pack(pady=15)
+
+        bottom_frame = ctk.CTkFrame(self.login_window, fg_color="#242424")
+        bottom_frame.pack(side="bottom", fill="x", pady=10)
+
         ctk.CTkButton(
-            frame, text="Login", command=lambda: self.switch_mode("login")
+            bottom_frame,
+            text="Login",
+            width=170,
+            height=43,
+            font=("Arial", 25),
+            command=lambda: self.switch_mode("login"),
         ).pack()
+
         frame.bind("<Return>", lambda event: self.handle_reset(email_entry.get()))
 
     def otp_check_ui(self) -> None:
         """
         Creates OTP check UI widgets.
+        Returns:
+            None
         """
-        self.bottom_frame.pack_forget()
-        frame = ctk.CTkFrame(self.login_window, fg_color="#242525")
+        for widget in self.login_window.winfo_children():
+            widget.destroy()
+
+        frame = ctk.CTkFrame(self.login_window, fg_color="#242424")
         frame.focus()
         frame.pack()
         self.current_frame = frame
@@ -275,10 +398,14 @@ class LoginManager:
         ctk.CTkButton(
             frame,
             text="Verify OTP",
+            font=("Arial", 25),
             command=lambda: self.verify_user_otp(otp_entry.get()),
         ).pack(pady=5)
         ctk.CTkButton(
-            frame, text="Login", command=lambda: self.switch_mode("login")
+            frame,
+            text="Login",
+            command=lambda: self.switch_mode("login"),
+            font=("Arial", 25),
         ).pack()
         frame.bind("<Return>", lambda event: self.verify_user_otp(otp_entry.get()))
 
@@ -289,7 +416,7 @@ class LoginManager:
             otp (str): The OTP entered by the user.
         """
         if self.otp_manager.verify_otp(int(otp)):
-            self.log_manager.log("Info", f"Successful OTP Check for: {self.email}")
+            self.log_manager.log("info", f"Successful OTP Check for: {self.email}")
             self.switch_mode("reset_password")
         else:
             messagebox.showerror(
@@ -299,9 +426,10 @@ class LoginManager:
     def reset_password_ui(self) -> None:
         """
         Creates the password reset UI widgets.
+        Returns:
+            None
         """
-        self.bottom_frame.pack_forget()
-        frame = ctk.CTkFrame(self.login_window, fg_color="#242525")
+        frame = ctk.CTkFrame(self.login_window, fg_color="#242424")
         frame.focus()
         frame.pack()
         self.current_frame = frame
@@ -315,16 +443,21 @@ class LoginManager:
         ctk.CTkButton(
             frame,
             text="Reset Password",
+            font=("Arial", 25),
             command=lambda: self.reset_password(password_entry, confirm_password_entry),
         ).pack(pady=5)
 
         ctk.CTkButton(
-            frame, text="Login", command=lambda: self.switch_mode("login")
+            frame,
+            text="Login",
+            font=("Arial", 25),
+            command=lambda: self.switch_mode("login"),
         ).pack()
 
         ctk.CTkButton(
             frame,
             text="Generate Password",
+            font=("Arial", 25),
             command=lambda: self.password_generator.generate_window(),
         ).pack()
 
@@ -368,6 +501,8 @@ class LoginManager:
         Args:
             password_entry (ctk.CTkEntry): The password entry widget.
             confirm_password_entry (ctk.CTkEntry): The confirm password entry widget.
+        Returns:
+            None
         """
         password = password_entry.get()
         confirm_password = confirm_password_entry.get()
@@ -384,9 +519,8 @@ class LoginManager:
             email_tuple = self.database_manager.get_email(self.user_id)
             if email_tuple:
                 email = email_tuple[0]
-            salt = self.encryption_manager.generate_salt()
-            hash = self.encryption_manager.hash_password(password, salt)
-            self.database_manager.update_user(email, hash, salt)
+                password_hash = self.encryption_manager.hash_password(password)
+                self.database_manager.update_user(email, password_hash)
             messagebox.showinfo("Success", "Password reset successfully.")
             self.switch_mode("login")
         else:
@@ -394,20 +528,27 @@ class LoginManager:
 
     def new_user_handler(self, email: str, password: str) -> None:
         """
-        Handles new user registration & Sends Formatted Email with User's Username.
+        Optimized handler for new user registration.
         Args:
             email (str): The user's email.
             password (str): The user's password.
+        Returns:
+            None
         """
-        salt = self.encryption_manager.generate_salt()
-        hash = self.encryption_manager.hash_password(password, salt)
         try:
-            self.database_manager.create_new_user(email, hash, salt)
+            password_hash = self.encryption_manager.hash_password(password)
+
+            self.database_manager.create_new_user(email, password_hash)
+            messagebox.showinfo("Success", "Account created successfully!")
+
             self.switch_mode("login")
             self.email_manager.send_email(email, file_path="./templates/welcome.html")
 
         except Exception as e:
             self.log_manager.log("Error", f"Failed to create Account: {e}")
+            messagebox.showerror(
+                "Error", f"Failed to create account. Please try again."
+            )
 
     def update_user_handler(self, email: str, password: str) -> None:
         """
@@ -415,10 +556,11 @@ class LoginManager:
         Args:
             email (str): The user's email.
             password (str): The user's password.
+        Returns:
+            None
         """
-        salt = self.encryption_manager.generate_salt()
-        hash = self.encryption_manager.hash_password(password, salt)
-        self.database_manager.update_user(email, hash, salt)
+        password_hash = self.encryption_manager.hash_password(password)
+        self.database_manager.update_user(email, password_hash)
         self.switch_mode("login")
         self.email_manager.send_email(
             email, file_path="./templates/update_account.html"
