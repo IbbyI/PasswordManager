@@ -1,6 +1,8 @@
+import os
 from math import log2
 import string
-import requests
+
+from handlers.log_manager import LogManager
 
 
 class PasswordStrength:
@@ -10,33 +12,27 @@ class PasswordStrength:
 
     def __init__(self):
         """
-        Fetches and Caches the Pwned Password list for O(1) Time Complexity.
+        Fetches and Caches the Pwned Password List
         """
-        self.pwned_passwords = self._fetch_pwned_passwords()
-
-    def _fetch_pwned_passwords(self) -> set:
-        """
-        Fetch and return the list of pwned passwords as a set.
-        """
-        url = (
-            "https://www.ncsc.gov.uk/static-assets/documents/PwnedPasswordsTop100k.json"
-        )
+        self.log_manager = LogManager()
+        file_path = "./assets/wordlists/password_list.txt"
         try:
-            response = requests.get(url)
-            response.raise_for_status()
-            return set(response.json())
-        except requests.exceptions.RequestException as e:
-            print(f"Error fetching pwned passwords: {e}")
-            return set()
+            with open(file_path, "r") as f:
+                self.pwned_passwords = set(f.read().splitlines())
+                self.log_manager.log("info", "Pwned Passwords list loaded to cache.")
+        except FileNotFoundError:
+            self.pwned_passwords = set()
+            self.log_manager.log(
+                "error", "Pwned Passwords list file not found. No passwords loaded."
+            )
 
-    def check_pwned_list(self, password: str) -> bool:
+    def check_pwned(self, password: str) -> bool:
         """
-        Checks if given password is in pwned password list.
+        Checks if the given password is in the Pwned Passwords list.
         Args:
-            password (str): Given password to check.
-
+            password (str): The password to check.
         Returns:
-            bool: True if password in set. False otherwise.
+            bool: True if the password is pwned, False otherwise.
         """
         return password in self.pwned_passwords
 
