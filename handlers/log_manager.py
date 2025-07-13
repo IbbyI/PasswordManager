@@ -7,7 +7,7 @@ class LogManager:
     LogManager class is used to log messages to a file and console.
     """
 
-    def __init__(self, log_file="./logs/app.log") -> None:
+    def __init__(self, log_file: str = "./logs/app.log") -> None:
         """
         Initialize the LogManager with a log file.
         Args:
