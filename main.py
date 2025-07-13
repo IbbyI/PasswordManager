@@ -37,7 +37,7 @@ class PasswordManagerApp:
         self.main_window = ctk.CTkToplevel()
         self.main_window.title("Password Manager")
         self.main_window.resizable(False, False)
-        self.main_window.geometry("800x300")
+        self.main_window.geometry("1900x1000")
 
         self.password_generator = PasswordGenerator()
         self.password_strength = PasswordStrength()
