@@ -1,7 +1,6 @@
 import sys
 from typing import Any
 import customtkinter as ctk
-from threading import Thread
 from tkinter import Menu, filedialog, messagebox, Event
 from ttkbootstrap import Treeview, Style
 
@@ -30,8 +29,8 @@ class GUIManager:
 
         self.main_window = main_window
         self.database_manager = database_manager
-        self.log_manager = LogManager()
         self.password_strength = PasswordStrength()
+        self.log_manager = LogManager()
         self.password_generator = PasswordGenerator()
         self.email_manager = EmailManager(self.log_manager)
         self.encryption_manager = EncryptionManager(self.log_manager)
@@ -43,8 +42,16 @@ class GUIManager:
             "Enter password",
             "Website/Application",
         ]
+        self._data_cache = None
         self.columns = ["ID", "Email", "Username", "Password", "Application"]
         self.build_main_window()
+
+    def _clear_cache(self) -> None:
+        """
+        Clears the data cache.
+        """
+        self._data_cache = None
+        self.log_manager.log("info", "Cache cleared successfully.")
 
     def initialize_account_manager(self) -> None:
         """
@@ -136,23 +143,7 @@ class GUIManager:
 
         self.scrollbar.pack(side=ctk.RIGHT, fill=ctk.Y)
         self.treeview.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
-        style.configure(
-            "Treeview.Heading",
-            font=(None, 22),
-            background=bg_color,
-            foreground=text_color,
-            fieldbackground=bg_color,
-            borderwidth=10,
-        )
-        style.configure(
-            "Treeview",
-            font=(None, 19),
-            rowheight=25,
-            background=bg_color,
-            foreground=text_color,
-            fieldbackground=bg_color,
-            borderwidth=0,
-        )
+
         style.map(
             "Treeview",
             background=[("selected", bg_color)],
@@ -167,26 +158,39 @@ class GUIManager:
         self.new_pass_button = ctk.CTkButton(
             self.button_tree,
             text="Password Generator",
+            width=220,
+            height=50,
+            font=("Arial", 28),
             command=self.password_generator.generate_window,
         )
         self.add_button = ctk.CTkButton(
-            self.button_tree, text="Add Account", command=self.add_account
+            self.button_tree,
+            text="Add Account",
+            width=220,
+            height=50,
+            font=("Arial", 28),
+            command=self.add_account,
         )
         self.data_button = ctk.CTkButton(
-            self.button_tree, text="Show Data", command=self.show_data
+            self.button_tree,
+            text="Show Data",
+            width=220,
+            height=50,
+            font=("Arial", 28),
+            command=self.show_data,
         )
         self.delete_button = ctk.CTkButton(
             self.button_tree,
             text="Delete All Data",
+            width=220,
+            height=50,
+            font=("Arial", 28),
             command=self.account_manager.delete_all,
         )
         self.new_pass_button.pack(side=ctk.BOTTOM)
-        self.add_button.pack(side=ctk.LEFT, pady=5)
-        self.data_button.pack(side=ctk.LEFT, pady=5)
-        self.delete_button.pack(side=ctk.LEFT, pady=5)
-
-    # def build_main_window_thread(self) -> None:
-    #     Thread(target=self._build_main_window).start()
+        self.add_button.pack(side=ctk.LEFT, padx=3, pady=3)
+        self.data_button.pack(side=ctk.LEFT, padx=3, pady=3)
+        self.delete_button.pack(side=ctk.LEFT, padx=3, pady=3)
 
     def add_account(self) -> None:
         """
@@ -195,19 +199,27 @@ class GUIManager:
         self.new_account_window = ctk.CTkToplevel(self.main_window)
         self.new_account_window.focus()
         self.new_account_window.attributes("-topmost", True)
-        self.new_account_window.geometry("310x200+550+150")
+        self.new_account_window.geometry("600x350+550+150")
         self.new_account_window.resizable(False, False)
         self.new_account_window.title("Add Account")
 
         new_entries = []
         for i, label in enumerate(self.columns[1:]):
-            ctk.CTkLabel(self.new_account_window, text=label).grid(
-                row=i, column=0, pady=2
-            )
+            ctk.CTkLabel(
+                self.new_account_window,
+                width=240,
+                height=48,
+                font=("Arial", 25),
+                text=label,
+            ).grid(row=i, column=0, pady=2)
+
             self.entry = ctk.CTkEntry(
                 self.new_account_window,
                 placeholder_text=self.placeholder_text[i],
-                border_width=0,
+                width=240,
+                height=48,
+                font=("Arial", 25),
+                border_width=2,
             )
             if i == 2:
                 self.entry.configure(show="*")
@@ -217,25 +229,33 @@ class GUIManager:
 
         e1_button = ctk.CTkButton(
             self.new_account_window,
-            text="Add Path",
+            text="📁",
+            width=50,
+            height=48,
+            font=("Arial", 25),
             command=lambda: self.open_file_dialog(new_entries[3]),
-            width=40,
         )
-        e1_button.grid(row=3, column=2, columnspan=1, padx=2)
+        e1_button.grid(row=3, column=2, columnspan=1, padx=0)
 
         self.opt_in_bool = ctk.IntVar()
         opt_in_checkbox = ctk.CTkCheckBox(
             self.new_account_window,
             text="Opt in for newsletters!",
+            width=225,
+            height=43,
+            font=("Arial", 25),
             variable=self.opt_in_bool,
             onvalue=1,
             offvalue=0,
         )
-        opt_in_checkbox.grid(row=4, column=1, columnspan=1, pady=2)
+        opt_in_checkbox.grid(row=4, column=1, pady=2)
 
         submit_button = ctk.CTkButton(
             self.new_account_window,
             text="Submit",
+            width=225,
+            height=43,
+            font=("Arial", 25),
             command=lambda: self.is_entry_empty(new_entries)
             and self.account_manager.new_data_handler(
                 new_entries, self.opt_in_bool, self.new_account_window
@@ -244,11 +264,22 @@ class GUIManager:
         self.new_account_window.bind(
             "<Return>",
             lambda event: self.is_entry_empty(new_entries)
-            and self.account_manager.new_data_handler(
+            and self._handle_new_account(
                 new_entries, self.opt_in_bool, self.new_account_window
             ),
         )
         submit_button.grid(row=5, column=1, columnspan=1, pady=2)
+
+    def _handle_new_account(self, entries, opt_in_bool, window) -> None:
+        """
+        Handles new account submission and clears cache.
+        Args:
+            entries (list[ctk.CTkEntry]): List of entry widgets.
+            opt_in_bool (ctk.IntVar): Checkbox state for opt-in.
+            window (ctk.CTkToplevel): The window to close after submission.
+        """
+        self.account_manager.new_data_handler(entries, opt_in_bool, window)
+        self._clear_cache()
 
     def is_entry_empty(self, entry_list: list[ctk.CTkEntry]) -> bool:
         """
@@ -280,15 +311,24 @@ class GUIManager:
             return
         edit_account_window = ctk.CTkToplevel(self.main_window)
         edit_account_window.focus()
-        edit_account_window.geometry("300x180")
+        edit_account_window.geometry("600x350+550+150")
         edit_account_window.attributes("-topmost", True)
         edit_account_window.resizable(False, False)
         edit_account_window.title("Edit Account")
 
         edit_entries = []
         for i, label in enumerate(self.columns[1:]):
-            ctk.CTkLabel(edit_account_window, text=label).grid(row=i, column=0)
-            entry = ctk.CTkEntry(edit_account_window)
+            ctk.CTkLabel(
+                edit_account_window,
+                text=label,
+                width=240,
+                height=48,
+                font=("Arial", 25),
+            ).grid(row=i, column=0)
+
+            entry = ctk.CTkEntry(
+                edit_account_window, width=240, height=48, font=("Arial", 25)
+            )
             entry.insert(0, data[i + 1])
             entry.grid(row=i, column=1)
             edit_entries.append(entry)
@@ -297,6 +337,9 @@ class GUIManager:
         opt_in_checkbox = ctk.CTkCheckBox(
             edit_account_window,
             text="Opt in for newsletters!",
+            width=225,
+            height=43,
+            font=("Arial", 25),
             variable=opt_in_bool,
             onvalue=1,
             offvalue=0,
@@ -306,6 +349,9 @@ class GUIManager:
         submit_button = ctk.CTkButton(
             edit_account_window,
             text="Submit",
+            width=225,
+            height=43,
+            font=("Arial", 25),
             command=lambda: self.is_entry_empty(edit_entries)
             and self.account_manager.edit_data_handler(
                 edit_entries, data, opt_in_bool, edit_account_window
@@ -316,10 +362,22 @@ class GUIManager:
         edit_account_window.bind(
             "<Return>",
             lambda event: self.is_entry_empty(edit_entries)
-            and self.account_manager.edit_data_handler(
+            and self._handle_edit_account(
                 edit_entries, data, opt_in_bool, edit_account_window
             ),
         )
+
+    def _handle_edit_account(self, entries, data, opt_in_bool, window) -> None:
+        """
+        Handles edited account submission and clears cache.
+        Args:
+            entries (list[ctk.CTkEntry]): List of entry widgets.
+            data (list[Any]): Original data to be edited.
+            opt_in_bool (ctk.IntVar): Checkbox state for opt-in.
+            window (ctk.CTkToplevel): The window to close after submission.
+        """
+        self.account_manager.edit_data_handler(entries, data, opt_in_bool, window)
+        self._clear_cache()
 
     def popup_menu(self, event: Event) -> None:
         """
@@ -357,16 +415,26 @@ class GUIManager:
         try:
             user_id = self.database_manager.get_user_id()
             if user_id is not None:
-                encrypted_data = self.database_manager.fetch_data()
-                decrypted_data = [
-                    self.encryption_manager.decrypt(data) for data in encrypted_data
-                ]
-                sliced_data = [data[:1] + data[2:] for data in decrypted_data]
-                self.refresh_tree_view()
+                if self._data_cache is None:
+                    self._data_cache = self.database_manager.fetch_data()
+                    encrypted_data = self._data_cache
+                    self.refresh_tree_view()
 
-                for data in sliced_data:
-                    self.treeview.insert("", ctk.END, values=data)
-                self.data_button.configure(text="Hide Data", command=self.hide_data)
+                    for i, data in enumerate(encrypted_data):
+                        decrypted_row = self.encryption_manager.decrypt(data[2:7])
+                        self.treeview.insert(
+                            "", ctk.END, values=[data[1]] + decrypted_row
+                        )
+                    self.data_button.configure(text="Hide Data", command=self.hide_data)
+                else:
+                    self.refresh_tree_view()
+                    for i, data in enumerate(self._data_cache):
+                        decrypted_row = self.encryption_manager.decrypt(data[2:7])
+                        self.treeview.insert(
+                            "", ctk.END, values=[data[1]] + decrypted_row
+                        )
+                    self.data_button.configure(text="Hide Data", command=self.hide_data)
+
         except Exception as error:
             messagebox.showerror("Error", f"Could Not Show Data: {error}")
             self.log_manager.log("Error", f"Could Not Show Data: {error}")
