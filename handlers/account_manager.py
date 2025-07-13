@@ -1,6 +1,5 @@
 import customtkinter as ctk
 from tkinter import messagebox
-from typing import Optional
 
 
 class AccountManager:
@@ -37,10 +36,10 @@ class AccountManager:
         self.log_manager = log_manager
         self.passsword_strength = password_strength
 
-        self.user_id = self.database_manager.get_user_id()
-        self.tuple_email = self.database_manager.get_email(self.user_id)
+        self.user_id: int | None = self.database_manager.get_user_id()
+        self.tuple_email: str | None = self.database_manager.get_email(self.user_id)
         if self.tuple_email:
-            self.email = self.tuple_email[0]
+            self.email: str = self.tuple_email[0]
 
         self.columns = ["ID", "Email", "Username", "Password", "Application"]
 
@@ -67,7 +66,7 @@ class AccountManager:
                 )
                 return
 
-            if self.passsword_strength.check_pwned_list(new_acc_data[2]):
+            if self.passsword_strength.check_pwned(new_acc_data[2]):
                 messagebox.showwarning(
                     "Weak Password",
                     "Your Password has been leaked.\nConsider changing your password.",
@@ -109,7 +108,7 @@ class AccountManager:
             return
 
         try:
-            if self.passsword_strength.check_pwned_list(edited_data[2]):
+            if self.passsword_strength.check_pwned(edited_data[2]):
                 messagebox.showwarning(
                     "Weak Password",
                     "Your Password has been leaked.\nConsider changing your password.",
@@ -169,6 +168,7 @@ class AccountManager:
         if confirm == "yes":
             try:
                 rows_affected = self.database_manager.delete_all_accounts()
+                self.gui_manager._clear_cache()
                 self.gui_manager.refresh_tree_view()
                 if rows_affected:
                     self.delete_data_email(rows_affected)
