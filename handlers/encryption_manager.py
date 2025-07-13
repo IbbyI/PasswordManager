@@ -1,7 +1,7 @@
-import hashlib
-import os
-from typing import Any, Optional
-
+import argon2
+from typing import Any
+from getpass import getuser
+from keyring import get_password
 from cryptography.fernet import Fernet
 
 
@@ -10,22 +10,25 @@ class EncryptionManager:
     Manages encryption and decryption of data.
     """
 
-    def __init__(self, log_manager) -> None:
+    def __init__(self, log_manager: Any) -> None:
         """
         Initialize the EncryptionManager with a log manager object.
         Args:
-            log_manager: The log manager object.
+            log_manager: The log manager object, expected to have a 'log' method.
         """
         self.log_manager = log_manager
-        self.key: Optional[bytes] = self.read_key()
+        self.key: bytes | None = self.read_key()
+        self.ph = argon2.PasswordHasher(
+            time_cost=2, memory_cost=65536, parallelism=4, hash_len=32, salt_len=16
+        )
 
-    def read_key(self) -> Optional[bytes]:
+    def read_key(self) -> bytes | None:
         """
         Creates Fernet Key
         Returns:
-            Optional[bytes]: Fernet Key
+            bytes | None: Fernet Key is returned if found, else None.
         """
-        key = os.getenv("FERNET_KEY")
+        key = get_password("fernet_key", getuser())
         if not key:
             self.log_manager.log("Warning", "Fernet Encryption Key Could Not Be Found.")
             return None
@@ -35,7 +38,7 @@ class EncryptionManager:
             self.log_manager.log("Error", f"Failed to encode key: {error}")
             return None
 
-    def encrypt(self, data: list) -> list[Any]:
+    def encrypt(self, data: list[int | str]) -> list[int | bytes]:
         """
         Encrypts Given Data using Fernet Encryption
         Args:
@@ -52,39 +55,44 @@ class EncryptionManager:
             for item in data
         ]
 
-    def decrypt(self, data: list) -> list[Any]:
+    def decrypt(self, data: list[str]) -> list[str]:
         """
-        Decrypts Fernet Encrypted Data
+        Decrypts Given Data using Fernet Encryption
         Args:
             data (list): Data to be decrypted.
         Returns:
-            list[Any]: Decrypted data.
+            list[str]: Decrypted data.
         """
         if self.key is None:
             self.log_manager.log("Error", "Encryption key is missing or invalid.")
             raise ValueError("Encryption key is missing or invalid.")
         cipher = Fernet(self.key)
-        return [
-            cipher.decrypt(item).decode() if isinstance(item, bytes) else item
-            for item in data
-        ]
+        return [cipher.decrypt(item.encode()).decode() for item in data]
 
-    def generate_salt(self) -> bytes:
+    def hash_password(self, password: str) -> str:
         """
-        Generates and returns random 256-bit string as salt.
-        Returns:
-            bytes: Random 256-bit string.
-        """
-        return os.urandom(32)
-
-    def hash_password(self, password: str, salt: bytes, iterations=10000) -> bytes:
-        """
-        Hashes Given Password
+        Hash password using Argon2.
         Args:
-            password (str): Password to be hashed.
-            salt (bytes): Salt to be used for hashing.
-            iterations (int, optional): Number of iterations for hashing. Defaults to 10000.
-        Returns:
-            bytes: Hashed password.
+            password (str): Password to password_hash.
         """
-        return hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
+        try:
+            return self.ph.hash(password)
+        except Exception as e:
+            self.log_manager.log("Error", f"Argon2 hashing failed: {e}")
+            raise
+
+    def verify_password(self, password: str, password_hash: str) -> bool:
+        """
+        Verify a password against an Argon2id password_hash.
+        """
+        try:
+            self.ph.verify(password_hash, password)
+            return True
+        except argon2.exceptions.VerifyMismatchError:
+            self.log_manager.log(
+                "Warning", "Password verification failed: Passwords do not match."
+            )
+            return False
+        except Exception as e:
+            self.log_manager.log("Error", f"Argon2 verification failed: {e}")
+            return False
