@@ -2,13 +2,13 @@
 
 ## Overview
 
-This Password Manager is a Python-based application that helps you securely store and manage account credentials. It provides an easy-to-use graphical interface, strong password generation, and encrypts all sensitive data to ensure the security of your accounts. Built with `Tkinter` and enhanced with `ttkbootstrap` for a modern theme, this tool offers a comprehensive solution for password management and data security.
+This Password Manager is a Python-based application that helps you securely store and manage account credentials. It provides an easy-to-use graphical interface, strong password generation, and encrypts all sensitive data to ensure the security of your accounts. Built with `Tkinter` and enhanced with `ttkbootstrap` and `customtkinter` for a modern theme, this tool offers a comprehensive solution for password management and data security.
 
 ## Features
 
 ### 1. **Master Login Page**
-   - **Secure Authentication**: The application starts with a master login page that ensures only authorized users can access the stored credentials.
-   - **SHA-256 Hashing with Salt**: The master password is securely stored using SHA-256 hashing with a random 32-bit salt. This ensures that the password is hashed before storage, and the hash is verified during login, preventing plain-text password storage and enhancing security.
+- **Secure Authentication**: The application starts with a master login page that ensures only authorized users can access the stored credentials.
+- **Argon2 Hashing with Salt**: The master password is securely stored using the `Argon2` hashing algorithm, which includes a built-in random salt and configurable memory, time, and parallelism parameters. This ensures the password is hashed before storage and verified during login, offering strong protection against brute-force and side-channel attacks.
 
 ### 2. **Account Management**
    - **Store Credentials**: Securely store account information including email, username, password, and application name.
@@ -30,12 +30,12 @@ This Password Manager is a Python-based application that helps you securely stor
    - **Optional Email Alerts**: Send notifications via email when new accounts are added or edited (optional).
    - **Email Validation**: Validates email formatting before allowing data to be saved, ensuring accuracy.
 
-### 6. **SQLite Database**
-   - **Local Storage**: Credentials are stored in an **SQLite database** on the local machine.
+### 6. **MySQL Database**
+   - **Local Storage**: Credentials are stored in an **MySQL database** on the local machine.
    - **Decryption on Retrieval**: Data is decrypted only when needed for display, ensuring stored information remains secure.
 
 ### 7. **Modern User Interface**
-   - **ttkbootstrap Theme**: The application uses the `ttkbootstrap` library to provide a sleek and modern look.
+   - **ttkbootstrap Theme**: The application uses the `customtkiner` and `ttkbootstrap` libraries to provide a sleek and modern look.
    - **Dark Mode**: The **Cyborg** theme is used for a dark mode experience.
    - **Interactive Elements**: Includes interactive buttons, entry fields, checkboxes, and a context menu (right-click) for editing or deleting accounts.
 
@@ -68,8 +68,8 @@ python3 main.py
 - Head over to the [Google Apps Password Settings](https://myaccount.google.com/apppasswords).
 - Login to your account.
 - Create a new app-specific password and name it Password Manager.
-- Insert your email into an environment variable named **email**.
-- Insert your apps password into an environment variable named **app_password**.
+- Insert your email into your system's keyring under `sender_email`.
+- Insert your apps password into your system's keyring under `app_password`.
 
 ## Adding Accounts
 - Click the **Add Account** button.
