@@ -1,7 +1,6 @@
 __pycache__/
 .vscode/
-.logs/app.log
-.venv/
-./assets/wordlists/password_list.txt
+venv/
 /assets/img/
 assets/img/icon.png
+logs/app.log
